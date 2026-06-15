@@ -27,10 +27,15 @@ export default function RegisterPage() {
     const supabase = createClient()
     const full_name = `${form.first_name} ${form.last_name}`.trim()
 
+    const callbackUrl = `${window.location.origin}/FrigoTransport/auth/callback/`
+
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
-      options: { data: { full_name, role: 'worker' } },
+      options: {
+        data: { full_name, role: 'worker' },
+        emailRedirectTo: callbackUrl,
+      },
     })
 
     if (signUpError) {
@@ -69,7 +74,7 @@ export default function RegisterPage() {
       setStep('done')
       setTimeout(() => router.push('/worker/'), 1200)
     } else {
-      setError('📧 Un email de confirmation a été envoyé. Cliquez sur le lien dans l\'email, puis connectez-vous.')
+      setError('📧 Cliquez sur le lien dans l\'email reçu — vous serez connecté automatiquement.')
     }
   }
 
