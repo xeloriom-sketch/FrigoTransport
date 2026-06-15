@@ -4,7 +4,7 @@ import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, Eye, EyeOff, ArrowRight } from 'lucide-react'
 
 function LoginForm() {
   const router = useRouter()
@@ -13,6 +13,7 @@ function LoginForm() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -20,109 +21,133 @@ function LoginForm() {
     e.preventDefault()
     setLoading(true)
     setError('')
-
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-
     if (error) {
       setError(error.message.includes('confirm')
-        ? 'Vérifiez votre email pour confirmer votre compte'
+        ? 'Confirmez votre email avant de vous connecter'
         : 'Email ou mot de passe incorrect'
       )
       setLoading(false)
       return
     }
-
     router.push(next)
   }
 
   return (
-    <div className="w-full max-w-md">
-      {/* Logo */}
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-sky-400 to-sky-600 rounded-2xl shadow-lg shadow-sky-500/30 mb-5">
-          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 2h8l2-2zM16 6h3l3 4v6h-6V6z" />
-          </svg>
+    <div className="w-full h-screen flex items-center justify-center p-4 sm:p-6 bg-bg-main overflow-hidden" style={{ letterSpacing: '-0.01em' }}>
+      <div className="w-full max-w-[1100px] h-full max-h-[700px] grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        {/* Panneau gauche */}
+        <div className="relative hidden lg:flex flex-col justify-between p-10 rounded-3xl bg-bg-card border border-border-thin overflow-hidden">
+          <div
+            className="absolute inset-0 opacity-10 bg-cover bg-center mix-blend-luminosity pointer-events-none"
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=800&auto=format&fit=crop&q=60')" }}
+          />
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+            <svg className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <line x1="0" y1="120" x2="1000" y2="120" stroke="white" strokeWidth="0.5" />
+              <line x1="0" y1="320" x2="1000" y2="320" stroke="white" strokeWidth="0.5" />
+              <line x1="180" y1="0" x2="180" y2="800" stroke="white" strokeWidth="0.5" />
+              <line x1="420" y1="0" x2="420" y2="800" stroke="white" strokeWidth="0.5" />
+            </svg>
+          </div>
+
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 bg-white rounded-md flex items-center justify-center">
+                <div className="w-2 h-2 bg-black rounded-full" />
+              </div>
+              <span className="text-lg font-bold tracking-tight">FrigoTransport.</span>
+            </div>
+            <Link href="/register/" className="text-xs font-medium text-neutral-300 bg-bg-main border border-border-thin px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-neutral-800 transition">
+              Créer un compte <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+
+          <div className="relative z-10 space-y-5">
+            <h1 className="text-3xl font-medium tracking-tight leading-tight max-w-xs text-neutral-100">
+              Gérez votre flotte,<br />tracez vos camions.
+            </h1>
+            <div className="flex items-center gap-2">
+              <div className="h-[2px] w-6 bg-white rounded-full" />
+              <div className="h-[2px] w-2 bg-neutral-700 rounded-full" />
+              <div className="h-[2px] w-2 bg-neutral-700 rounded-full" />
+            </div>
+          </div>
         </div>
-        <h1 className="text-3xl font-bold text-white">FrigoTransport</h1>
-        <p className="text-slate-400 mt-1 text-sm">Gestion de flotte frigorifique</p>
-      </div>
 
-      {/* Card */}
-      <div className="bg-white/[0.06] backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl">
-        <h2 className="text-lg font-semibold text-white mb-6">Connexion</h2>
+        {/* Panneau droit — formulaire */}
+        <div className="flex flex-col justify-center px-4 sm:px-10 lg:px-14">
+          <div className="mb-8">
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white mb-2">
+              Connexion
+            </h2>
+            <p className="text-sm text-txt-muted">
+              Pas encore de compte ?{' '}
+              <Link href="/register/" className="text-neutral-200 underline underline-offset-4 hover:text-white transition">
+                S'inscrire
+              </Link>
+            </p>
+          </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Email</label>
+          <form onSubmit={handleLogin} className="space-y-4">
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
-              autoComplete="email"
-              placeholder="nom@email.fr"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50 transition text-sm"
+              placeholder="Email"
+              className="w-full bg-bg-card border border-border-thin rounded-xl px-4 py-3 text-sm text-white placeholder-txt-muted transition focus:bg-bg-input focus:outline-none focus:border-neutral-600"
+              style={{ colorScheme: 'dark' }}
             />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Mot de passe</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              placeholder="••••••••"
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50 transition text-sm"
-            />
-          </div>
 
-          {error && (
-            <div className="flex items-start gap-2.5 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-300 text-sm">
-              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-              {error}
+            <div className="relative">
+              <input
+                type={showPass ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                placeholder="Mot de passe"
+                className="w-full bg-bg-card border border-border-thin rounded-xl px-4 py-3 pr-11 text-sm text-white placeholder-txt-muted transition focus:bg-bg-input focus:outline-none focus:border-neutral-600"
+                style={{ colorScheme: 'dark' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-txt-muted hover:text-white transition p-1"
+              >
+                {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-sky-500/20 mt-2"
-          >
-            {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Connexion...</> : 'Se connecter'}
-          </button>
-        </form>
+            {error && (
+              <p className="text-red-400 text-xs px-1">{error}</p>
+            )}
 
-        <div className="mt-6 pt-6 border-t border-white/10 text-center">
-          <p className="text-slate-500 text-sm">
-            Première fois ?{' '}
-            <Link href="/register/" className="text-sky-400 hover:text-sky-300 font-medium transition">
-              Créer mon compte
-            </Link>
-          </p>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-accent text-black font-semibold text-sm py-3 rounded-xl hover:bg-[#d2eb57] active:scale-[0.99] transition duration-150 flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Connexion...</> : 'Se connecter'}
+            </button>
+          </form>
         </div>
-      </div>
 
-      <p className="text-center text-slate-700 text-xs mt-6">
-        Contactez votre responsable pour toute assistance
-      </p>
+      </div>
     </div>
   )
 }
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-sky-500/8 rounded-full blur-[120px]" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-indigo-500/8 rounded-full blur-[100px]" />
+    <Suspense fallback={
+      <div className="min-h-screen bg-bg-main flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-txt-muted" />
       </div>
-      <Suspense fallback={<Loader2 className="w-8 h-8 animate-spin text-sky-400" />}>
-        <LoginForm />
-      </Suspense>
-    </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }
