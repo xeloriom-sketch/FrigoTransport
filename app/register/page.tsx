@@ -69,8 +69,7 @@ export default function RegisterPage() {
       setStep('done')
       setTimeout(() => router.push('/worker/'), 1200)
     } else {
-      // Email non confirmé → montrer les instructions précises
-      setError('Vérifiez votre boîte email et cliquez sur le lien de confirmation, puis revenez vous connecter.')
+      setError('📧 Un email de confirmation a été envoyé. Cliquez sur le lien dans l\'email, puis connectez-vous.')
     }
   }
 
