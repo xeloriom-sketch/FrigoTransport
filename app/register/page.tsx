@@ -34,7 +34,11 @@ export default function RegisterPage() {
     })
 
     if (signUpError) {
-      setError(signUpError.message.includes('already') ? 'Email déjà utilisé' : signUpError.message)
+      const msg = signUpError.message.includes('already') ? 'Email déjà utilisé'
+        : signUpError.message.includes('rate') ? 'Trop de tentatives, réessayez dans quelques minutes'
+        : signUpError.message.includes('disabled') ? 'Les inscriptions sont désactivées — contactez votre responsable'
+        : signUpError.message
+      setError(msg)
       setLoading(false)
       return
     }
