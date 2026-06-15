@@ -50,17 +50,27 @@ export default function RegisterPage() {
       )
     }
 
+    setLoading(false)
+
+    // Si Supabase a retourné une session directement (confirmation email désactivée)
+    if (data.session) {
+      setStep('done')
+      setTimeout(() => router.push('/worker/'), 1200)
+      return
+    }
+
+    // Sinon : la confirmation email est activée → on essaie quand même de se connecter
     const { error: loginError } = await supabase.auth.signInWithPassword({
       email: form.email,
       password: form.password,
     })
 
-    setLoading(false)
     if (!loginError) {
       setStep('done')
       setTimeout(() => router.push('/worker/'), 1200)
     } else {
-      setError('Inscription réussie mais connexion impossible. Contactez votre responsable.')
+      // Email non confirmé → montrer les instructions précises
+      setError('Vérifiez votre boîte email et cliquez sur le lien de confirmation, puis revenez vous connecter.')
     }
   }
 
