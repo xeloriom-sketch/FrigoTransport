@@ -18,18 +18,29 @@ export function useAuth(requiredRole?: 'admin' | 'worker') {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/FrigoTransport/login/?next=' + encodeURIComponent(window.location.pathname + window.location.search))
+        router.push('/login/?next=' + encodeURIComponent(window.location.pathname + window.location.search))
         return
       }
 
-      const { data: profile } = await supabase
+      let { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
+
+      // Profil manquant → le créer (fallback si trigger pas déclenché)
+      if (!profile) {
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          full_name: user.email?.split('@')[0] ?? 'Ouvrier',
+          role: 'worker',
+        }, { onConflict: 'id' })
+        const res = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
+        profile = res.data
+      }
 
       if (requiredRole === 'admin' && profile?.role !== 'admin') {
-        router.push('/FrigoTransport/worker/')
+        router.push('/worker/')
         return
       }
 
