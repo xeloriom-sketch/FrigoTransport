@@ -4,20 +4,19 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { LayoutDashboard, Truck, Users, LogOut, Snowflake } from 'lucide-react'
+import { Truck, Users, LayoutDashboard, LogOut, Snowflake, Search, Bell, ChevronDown } from 'lucide-react'
 import clsx from 'clsx'
 
 const nav = [
-  { href: '/admin/', label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
-  { href: '/admin/trucks/', label: 'Camions', icon: Truck },
-  { href: '/admin/workers/', label: 'Ouvriers', icon: Users },
+  { href: '/admin/', label: 'Overview', exact: true },
+  { href: '/admin/trucks/', label: 'Camions' },
+  { href: '/admin/workers/', label: 'Ouvriers' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
 
-  // Charger Leaflet CSS uniquement sur les pages admin
   useEffect(() => {
     const id = 'leaflet-css'
     if (!document.getElementById(id)) {
@@ -36,50 +35,67 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex h-screen bg-slate-100 overflow-hidden">
-      {/* Sidebar desktop */}
-      <aside className="w-56 shrink-0 bg-slate-900 flex flex-col">
-        <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-          <div className="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center shrink-0">
-            <Snowflake className="w-4 h-4 text-white" />
+    <div className="min-h-screen bg-bg-main text-white" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.01em' }}>
+
+      {/* Top Navigation */}
+      <header className="flex items-center justify-between px-6 py-3 border-b border-border-thin">
+        <div className="flex items-center gap-10">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 bg-white rounded-md flex items-center justify-center">
+              <Snowflake className="w-3 h-3 text-black" />
+            </div>
+            <span className="text-base font-bold tracking-tight">FrigoTransport.</span>
           </div>
-          <div>
-            <p className="text-white font-semibold text-sm leading-tight">FrigoTransport</p>
-            <p className="text-slate-500 text-xs">Administration</p>
-          </div>
+
+          {/* Nav links */}
+          <nav className="flex items-center gap-6 text-sm font-medium">
+            {nav.map(({ href, label, exact }) => {
+              const active = exact
+                ? pathname === href || pathname === href.slice(0, -1)
+                : pathname.startsWith(href.slice(0, -1))
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={clsx(
+                    'transition',
+                    active ? 'text-white' : 'text-txt-muted hover:text-white'
+                  )}
+                >
+                  {label}
+                </Link>
+              )
+            })}
+          </nav>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {nav.map(({ href, label, icon: Icon, exact }) => {
-            const active = exact ? pathname === href || pathname === href.slice(0, -1) : pathname.startsWith(href.slice(0, -1))
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={clsx(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
-                  active ? 'bg-sky-500/20 text-sky-400' : 'text-slate-400 hover:text-white hover:bg-white/5'
-                )}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                {label}
-              </Link>
-            )
-          })}
-        </nav>
-
-        <div className="px-3 py-4 border-t border-white/10">
+        {/* Right controls */}
+        <div className="flex items-center gap-3">
+          <button className="w-9 h-9 flex items-center justify-center rounded-full border border-border-thin text-txt-muted hover:text-white hover:bg-bg-card transition">
+            <Search className="w-4 h-4" />
+          </button>
+          <button className="w-9 h-9 flex items-center justify-center rounded-full border border-border-thin text-txt-muted hover:text-white hover:bg-bg-card transition">
+            <Bell className="w-4 h-4" />
+          </button>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition"
+            className="flex items-center gap-2.5 bg-bg-card border border-border-thin pl-3 pr-4 py-1.5 rounded-full hover:bg-bg-input transition"
           >
-            <LogOut className="w-4 h-4 shrink-0" />
-            Déconnexion
+            <div className="w-6 h-6 rounded-full bg-sky-500/20 border border-sky-500/30 flex items-center justify-center">
+              <Truck className="w-3 h-3 text-sky-400" />
+            </div>
+            <div className="leading-none text-left">
+              <p className="text-xs font-semibold text-white">Patron</p>
+              <span className="text-[10px] text-txt-muted">Administrateur</span>
+            </div>
+            <ChevronDown className="w-3 h-3 text-txt-muted" />
           </button>
         </div>
-      </aside>
+      </header>
 
-      <main className="flex-1 overflow-y-auto bg-slate-50">
+      {/* Page content */}
+      <main className="p-5">
         {children}
       </main>
     </div>

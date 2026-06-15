@@ -5,18 +5,20 @@ const config: Config = {
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './hooks/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          900: '#0c4a6e',
-        },
+        'bg-main':   '#0c0d0e',
+        'bg-card':   '#161617',
+        'bg-input':  '#1c1d1e',
+        'txt-muted': '#7e7f82',
+        'accent':    '#e1f970',
+        'border-thin': '#242526',
+      },
+      fontFamily: {
+        sans: ['Inter', 'SF Pro Display', '-apple-system', 'sans-serif'],
       },
     },
   },
