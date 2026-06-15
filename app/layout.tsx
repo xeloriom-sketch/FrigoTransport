@@ -8,7 +8,7 @@ const BASE = '/FrigoTransport'
 
 export const metadata: Metadata = {
   title: 'FrigoTransport',
-  description: 'Pointage présence et suivi camions',
+  description: 'Gestion de flotte frigorifique',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#0ea5e9',
+  themeColor: '#020817',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -26,11 +26,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
+    <html lang="fr" style={{ backgroundColor: '#020817' }}>
       <head>
-        {/* Manifest avec basePath explicite pour GitHub Pages */}
         <link rel="manifest" href={`${BASE}/manifest.json`} />
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossOrigin="" />
         <link rel="apple-touch-icon" href={`${BASE}/icon-192.png`} />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />

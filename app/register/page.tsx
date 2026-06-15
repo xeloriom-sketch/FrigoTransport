@@ -64,7 +64,7 @@ export default function RegisterPage() {
   }
 
   if (step === 'done') return (
-    <div className="min-h-screen bg-[#070c18] flex items-center justify-center">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
       <div className="text-center">
         <div className="w-16 h-16 bg-emerald-500/20 border border-emerald-500/30 rounded-3xl flex items-center justify-center mx-auto mb-5">
           <CheckCircle className="w-8 h-8 text-emerald-400" />
@@ -76,7 +76,7 @@ export default function RegisterPage() {
   )
 
   if (step === 'confirm_email') return (
-    <div className="min-h-screen bg-[#070c18] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="bg-white/[0.06] border border-white/10 rounded-3xl p-8 text-center">
           <div className="w-14 h-14 bg-sky-500/10 border border-sky-500/20 rounded-2xl flex items-center justify-center mx-auto mb-5">
@@ -99,7 +99,7 @@ export default function RegisterPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#070c18] flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-96 h-96 bg-sky-500/8 rounded-full blur-[120px]" />
       </div>
