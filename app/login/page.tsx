@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 import { Truck, Loader2, AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
@@ -97,7 +98,12 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-slate-600 text-xs mt-6">
+        <p className="text-center text-sm mt-5">
+          <Link href="/register" className="text-sky-400 hover:text-sky-300 font-medium transition">
+            Première connexion ? Créer mon compte
+          </Link>
+        </p>
+        <p className="text-center text-slate-600 text-xs mt-3">
           Pour toute assistance, contactez votre responsable
         </p>
       </div>
