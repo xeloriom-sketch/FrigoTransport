@@ -2,20 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Leaflet */
-@import 'leaflet/dist/leaflet.css';
-
 :root {
   --sidebar-width: 240px;
 }
 
 body {
   @apply bg-slate-50 text-slate-900 antialiased;
-}
-
-/* Fix Leaflet marker icons avec webpack */
-.leaflet-default-icon-path {
-  background-image: url(leaflet/dist/images/marker-icon.png);
 }
 
 /* Scrollbar discrète */

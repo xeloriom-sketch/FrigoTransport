@@ -1,18 +1,21 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+'use client'
 
-export default async function Home() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
-  if (!user) redirect('/login')
+export default function Home() {
+  const router = useRouter()
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { router.push('/login/'); return }
+      supabase.from('profiles').select('role').eq('id', user.id).single().then(({ data }) => {
+        router.push(data?.role === 'admin' ? '/admin/' : '/worker/')
+      })
+    })
+  }, [])
 
-  if (profile?.role === 'admin') redirect('/admin')
-  redirect('/worker')
+  return null
 }
