@@ -72,27 +72,6 @@ export default function RegisterPage() {
     </div>
   )
 
-  if (step === 'confirm_email') return (
-    <div className="min-h-screen bg-bg-main flex items-center justify-center p-6">
-      <div className="w-full max-w-sm bg-bg-card border border-border-thin rounded-3xl p-8 text-center">
-        <div className="w-12 h-12 bg-bg-input rounded-2xl flex items-center justify-center mx-auto mb-5">
-          <Mail className="w-6 h-6 text-txt-muted" />
-        </div>
-        <h2 className="text-xl font-semibold text-white mb-2">Vérifiez votre email</h2>
-        <p className="text-txt-muted text-sm mb-1">Un lien a été envoyé à</p>
-        <p className="text-white text-sm font-medium mb-6">{form.email}</p>
-        <div className="bg-bg-input border border-border-thin rounded-xl p-3 mb-5 text-left">
-          <p className="text-[11px] text-txt-muted leading-relaxed">
-            Pour désactiver la confirmation email → Supabase → Authentication → Providers → Email → décocher "Confirm email".
-          </p>
-        </div>
-        <Link href="/login/" className="block w-full py-3 bg-accent text-black text-sm font-semibold rounded-xl hover:bg-[#d2eb57] transition">
-          Aller à la connexion
-        </Link>
-      </div>
-    </div>
-  )
-
   return (
     <div className="w-full h-screen flex items-center justify-center p-4 sm:p-6 bg-bg-main overflow-hidden" style={{ letterSpacing: '-0.01em' }}>
       <div className="w-full max-w-[1100px] h-full max-h-[700px] grid grid-cols-1 lg:grid-cols-2 gap-5">
