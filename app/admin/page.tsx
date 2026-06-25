@@ -76,7 +76,7 @@ export default function AdminDashboard() {
   })
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 items-start">
 
       {/* ─── LEFT COLUMN ─── */}
       <div className="space-y-4">
@@ -198,7 +198,7 @@ export default function AdminDashboard() {
       <div className="space-y-4">
 
         {/* MAP */}
-        <div className="bg-[#111213] rounded-3xl h-[360px] relative overflow-hidden border border-border-thin">
+        <div className="bg-[#111213] rounded-3xl h-[520px] relative overflow-hidden border border-border-thin">
           {/* Map controls overlay */}
           <div className="absolute top-4 left-4 z-10 flex gap-2">
             <div className="bg-white text-black px-4 py-2 rounded-full flex items-center gap-2 shadow-xl text-xs font-medium">

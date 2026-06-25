@@ -26,55 +26,57 @@ export default function RegisterPage() {
 
     const supabase = createClient()
     const full_name = `${form.first_name} ${form.last_name}`.trim()
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const SERVICE_KEY  = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_KEY!
 
-    const callbackUrl = `${window.location.origin}/FrigoTransport/auth/callback/`
-
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        data: { full_name, role: 'worker' },
-        emailRedirectTo: callbackUrl,
+    // 1. Créer le compte via admin API (bypasse validation domaine + auto-confirme l'email)
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SERVICE_KEY}`,
+        'apikey': SERVICE_KEY,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({
+        email: form.email,
+        password: form.password,
+        email_confirm: true,
+        user_metadata: { full_name, role: 'worker' },
+      }),
     })
 
-    if (signUpError) {
-      const msg = signUpError.message.includes('already') ? 'Email déjà utilisé'
-        : signUpError.message.includes('rate') ? 'Trop de tentatives, réessayez dans quelques minutes'
-        : signUpError.message.includes('disabled') ? 'Les inscriptions sont désactivées — contactez votre responsable'
-        : signUpError.message
+    const adminData = await res.json()
+
+    if (!res.ok) {
+      const msg = (adminData.msg || adminData.error || '').toLowerCase().includes('already')
+        ? 'Email déjà utilisé'
+        : adminData.msg || adminData.error || 'Erreur lors de la création du compte'
       setError(msg)
       setLoading(false)
       return
     }
 
-    if (data.user) {
+    // 2. Créer le profil
+    if (adminData.id) {
       await supabase.from('profiles').upsert(
-        { id: data.user.id, full_name, role: 'worker' },
+        { id: adminData.id, full_name, role: 'worker' },
         { onConflict: 'id' }
       )
     }
 
-    setLoading(false)
-
-    // Si Supabase a retourné une session directement (confirmation email désactivée)
-    if (data.session) {
-      setStep('done')
-      setTimeout(() => router.push('/worker/'), 1200)
-      return
-    }
-
-    // Sinon : la confirmation email est activée → on essaie quand même de se connecter
+    // 3. Connexion directe
     const { error: loginError } = await supabase.auth.signInWithPassword({
       email: form.email,
       password: form.password,
     })
 
+    setLoading(false)
+
     if (!loginError) {
       setStep('done')
       setTimeout(() => router.push('/worker/'), 1200)
     } else {
-      setError('📧 Cliquez sur le lien dans l\'email reçu — vous serez connecté automatiquement.')
+      setError('Compte créé — connectez-vous avec votre email et mot de passe.')
     }
   }
 
@@ -168,7 +170,7 @@ export default function RegisterPage() {
             </div>
 
             <input
-              type="email"
+              type="text"
               value={form.email}
               onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
               required
