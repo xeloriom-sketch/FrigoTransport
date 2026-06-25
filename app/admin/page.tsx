@@ -76,18 +76,53 @@ export default function AdminDashboard() {
   })
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 items-start">
+    <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[300px_1fr] lg:gap-4 lg:items-start">
 
-      {/* ─── LEFT COLUMN ─── */}
-      <div className="space-y-4">
+      {/* ── CARTE (mobile: en premier, pleine largeur) ── */}
+      <div className="lg:hidden bg-[#111213] rounded-2xl relative overflow-hidden border border-border-thin" style={{ height: 260 }}>
+        <div className="absolute top-3 left-3 z-10 flex gap-2">
+          <div className="bg-white text-black px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xl text-xs font-medium">
+            <MapPin className="w-3 h-3 text-neutral-500" />
+            <span>Suivi en direct</span>
+          </div>
+          <div className="bg-bg-card border border-border-thin text-white px-2.5 py-1.5 rounded-full flex items-center gap-1 text-xs">
+            <Radio className="w-3 h-3 text-accent" />
+            <span className="font-medium">{positions.length}</span>
+          </div>
+        </div>
+        <div className="h-full">
+          <LiveMap positions={positions} />
+        </div>
+      </div>
 
-        {/* CARD 1 — Activité du jour */}
+      {/* ── STATS MOBILES (2x2 grid) ── */}
+      <div className="lg:hidden grid grid-cols-2 gap-2.5">
+        {[
+          { icon: Truck, label: 'Camions', value: totalTrucks },
+          { icon: Users, label: 'Ouvriers', value: totalWorkers },
+          { icon: Activity, label: 'En service', value: assignments.length },
+          { icon: MapPin, label: 'Positions GPS', value: positions.length },
+        ].map(({ icon: Icon, label, value }) => (
+          <div key={label} className="bg-bg-card border border-border-thin rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-9 h-9 bg-bg-input rounded-xl flex items-center justify-center shrink-0">
+              <Icon className="w-4 h-4 text-txt-muted" />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-white leading-none">{value}</p>
+              <p className="text-[11px] text-txt-muted mt-0.5">{label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── LEFT COLUMN DESKTOP ── */}
+      <div className="hidden lg:block space-y-4">
+
         <div className="bg-bg-card rounded-2xl p-5 border border-border-thin">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-[15px] font-medium text-white">Activité du jour</h3>
             <ArrowUpRight className="w-4 h-4 text-txt-muted" />
           </div>
-
           <div className="grid grid-cols-2 gap-2 mb-6">
             {[
               { icon: Truck, label: 'Camions total', value: totalTrucks },
@@ -103,8 +138,6 @@ export default function AdminDashboard() {
               </div>
             ))}
           </div>
-
-          {/* Barre de progression */}
           <div className="relative pt-4 pb-2">
             <div className="w-full h-[2px] bg-bg-input rounded-full overflow-hidden">
               <div
@@ -124,13 +157,11 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* CARD 2 — Statut flotte */}
         <div className="bg-bg-card rounded-2xl p-5 border border-border-thin">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-[15px] font-medium text-white">Statut flotte</h3>
             <ArrowUpRight className="w-4 h-4 text-txt-muted" />
           </div>
-
           <div className="space-y-3.5 text-xs">
             {[
               { label: 'En service', count: assignments.length, total: totalTrucks, color: 'bg-accent' },
@@ -145,10 +176,7 @@ export default function AdminDashboard() {
                   <span className="text-white font-medium w-5 shrink-0">{count}</span>
                   <div className="flex-1 flex items-center gap-[2px]">
                     {Array.from({ length: 20 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={`w-[2px] h-3 rounded-sm ${i < filled ? color : 'bg-neutral-800'}`}
-                      />
+                      <div key={i} className={`w-[2px] h-3 rounded-sm ${i < filled ? color : 'bg-neutral-800'}`} />
                     ))}
                   </div>
                   <span className="text-txt-muted w-8 text-right shrink-0">{pct}%</span>
@@ -158,7 +186,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* CARD 3 — Dernières positions */}
         <div className="bg-bg-card rounded-2xl p-5 border border-border-thin">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-[15px] font-medium text-white">Positions GPS</h3>
@@ -167,7 +194,6 @@ export default function AdminDashboard() {
               <span className="text-[10px] text-txt-muted">Live</span>
             </div>
           </div>
-
           <div className="space-y-3">
             {positions.length === 0 && (
               <p className="text-txt-muted text-xs text-center py-4">Aucune position enregistrée</p>
@@ -191,15 +217,13 @@ export default function AdminDashboard() {
             ))}
           </div>
         </div>
-
       </div>
 
-      {/* ─── RIGHT COLUMN ─── */}
+      {/* ── RIGHT COLUMN DESKTOP + Affectations mobile ── */}
       <div className="space-y-4">
 
-        {/* MAP */}
-        <div className="bg-[#111213] rounded-3xl h-[520px] relative overflow-hidden border border-border-thin">
-          {/* Map controls overlay */}
+        {/* CARTE DESKTOP */}
+        <div className="hidden lg:block bg-[#111213] rounded-3xl h-[520px] relative overflow-hidden border border-border-thin">
           <div className="absolute top-4 left-4 z-10 flex gap-2">
             <div className="bg-white text-black px-4 py-2 rounded-full flex items-center gap-2 shadow-xl text-xs font-medium">
               <MapPin className="w-3 h-3 text-neutral-500" />
@@ -210,24 +234,19 @@ export default function AdminDashboard() {
               <span className="font-medium">{positions.length} camions</span>
             </div>
           </div>
-
           <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-1">
             <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center shadow-lg font-bold text-sm hover:bg-neutral-100 transition">+</button>
             <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center shadow-lg font-bold text-sm hover:bg-neutral-100 transition">−</button>
           </div>
-
           <div className="h-full">
             <LiveMap positions={positions} />
           </div>
         </div>
 
-        {/* ASSIGNMENTS TABLE */}
-        <div className="bg-bg-card rounded-2xl p-5 border border-border-thin">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-            <h3 className="text-[16px] font-medium text-white">Affectations</h3>
-
-            {/* Segmented tabs */}
+        {/* AFFECTATIONS */}
+        <div className="bg-bg-card rounded-2xl p-4 lg:p-5 border border-border-thin">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 lg:mb-6">
+            <h3 className="text-[15px] font-medium text-white">Affectations</h3>
             <div className="bg-neutral-900/60 p-0.5 rounded-xl border border-border-thin flex gap-0.5 text-xs">
               {(['Tous', 'Actifs', 'Terminés'] as TabFilter[]).map(t => (
                 <button
@@ -235,9 +254,7 @@ export default function AdminDashboard() {
                   onClick={() => setTab(t)}
                   className={`px-3 py-1.5 rounded-lg transition font-medium ${
                     tab === t
-                      ? t === 'Actifs'
-                        ? 'bg-accent text-black'
-                        : 'bg-neutral-800 text-white'
+                      ? t === 'Actifs' ? 'bg-accent text-black' : 'bg-neutral-800 text-white'
                       : 'text-txt-muted hover:text-white'
                   }`}
                 >
@@ -247,8 +264,8 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
+          {/* Table desktop */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-[11px] text-txt-muted border-b border-neutral-800 font-medium uppercase tracking-wider">
@@ -262,13 +279,10 @@ export default function AdminDashboard() {
               </thead>
               <tbody className="text-xs divide-y divide-neutral-900/60">
                 {filteredAssignments.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-txt-muted">Aucune affectation</td>
-                  </tr>
+                  <tr><td colSpan={6} className="py-8 text-center text-txt-muted">Aucune affectation</td></tr>
                 )}
                 {filteredAssignments.map(a => {
                   const duration = getDuration(a.started_at, a.ended_at)
-                  const pos = positions.find(p => p.worker_name === a.worker?.full_name)
                   return (
                     <tr key={a.id} className="hover:bg-neutral-800/20 transition-colors">
                       <td className="py-3">
@@ -279,12 +293,8 @@ export default function AdminDashboard() {
                           <span className="font-medium text-white">{a.truck?.name}</span>
                         </div>
                       </td>
-                      <td className="py-3">
-                        <span className="text-white font-medium">{a.worker?.full_name}</span>
-                      </td>
-                      <td className="py-3">
-                        <span className="font-mono text-txt-muted text-[11px]">{a.truck?.plate_number}</span>
-                      </td>
+                      <td className="py-3"><span className="text-white font-medium">{a.worker?.full_name}</span></td>
+                      <td className="py-3"><span className="font-mono text-txt-muted text-[11px]">{a.truck?.plate_number}</span></td>
                       <td className="py-3 text-txt-muted">
                         {new Date(a.started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                       </td>
@@ -292,13 +302,11 @@ export default function AdminDashboard() {
                       <td className="py-3">
                         {a.is_active ? (
                           <span className="inline-flex items-center gap-1.5 text-accent text-[11px] font-medium">
-                            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                            En service
+                            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />En service
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 text-txt-muted text-[11px]">
-                            <CheckCircle className="w-3 h-3" />
-                            Terminé
+                            <CheckCircle className="w-3 h-3" />Terminé
                           </span>
                         )}
                       </td>
@@ -308,8 +316,40 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
-        </div>
 
+          {/* Cartes mobile */}
+          <div className="md:hidden space-y-2">
+            {filteredAssignments.length === 0 && (
+              <p className="py-6 text-center text-txt-muted text-sm">Aucune affectation</p>
+            )}
+            {filteredAssignments.map(a => {
+              const duration = getDuration(a.started_at, a.ended_at)
+              return (
+                <div key={a.id} className="bg-bg-input/40 border border-border-thin rounded-xl p-3.5 flex items-center gap-3">
+                  <div className="w-9 h-9 bg-bg-input rounded-xl flex items-center justify-center shrink-0">
+                    <Truck className="w-4 h-4 text-txt-muted" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-white truncate">{a.truck?.name}</p>
+                      <span className="font-mono text-[10px] text-txt-muted shrink-0">{a.truck?.plate_number}</span>
+                    </div>
+                    <p className="text-[11px] text-txt-muted mt-0.5">{a.worker?.full_name} · {duration}</p>
+                  </div>
+                  <div className="shrink-0">
+                    {a.is_active ? (
+                      <span className="flex items-center gap-1 text-accent text-[11px] font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />Live
+                      </span>
+                    ) : (
+                      <CheckCircle className="w-4 h-4 text-txt-muted" />
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
     </div>
   )

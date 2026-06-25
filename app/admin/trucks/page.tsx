@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import type { Truck } from '@/types'
-import { Plus, QrCode, Trash2, Loader2, Printer, X, ArrowUpRight } from 'lucide-react'
+import { Plus, QrCode, Trash2, Loader2, Printer, X } from 'lucide-react'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://xeloriom-sketch.github.io/FrigoTransport'
 
@@ -49,7 +49,7 @@ export default function TrucksPage() {
       try {
         const QRCode = (await import('qrcode')).default
         const url = `${APP_URL}/scan/?t=${truck.qr_token}`
-        const canvas = await QRCode.toCanvas(url, { width: 260, margin: 2 })
+        const canvas = await QRCode.toCanvas(url, { width: 240, margin: 2 })
         qrRef.current.innerHTML = ''
         qrRef.current.appendChild(canvas)
       } catch (err) {
@@ -79,84 +79,112 @@ export default function TrucksPage() {
       </div>
 
       {/* Formulaire */}
-      <div className="bg-bg-card border border-border-thin rounded-2xl p-5">
+      <div className="bg-bg-card border border-border-thin rounded-2xl p-4 lg:p-5">
         <h2 className="text-sm font-medium text-white mb-4">Ajouter un camion</h2>
-        <form onSubmit={addTruck} className="flex flex-wrap gap-3">
+        <form onSubmit={addTruck} className="space-y-3">
           <input
             value={name} onChange={e => setName(e.target.value)}
-            placeholder="Nom (ex: Camion 01)" required
-            className="flex-1 min-w-40 px-3 py-2.5 bg-bg-input border border-border-thin rounded-xl text-white text-sm placeholder-txt-muted focus:outline-none focus:border-neutral-600 transition"
+            placeholder="Nom du camion (ex: Camion 01)" required
+            className="w-full px-3 py-3 bg-bg-input border border-border-thin rounded-xl text-white text-sm placeholder-txt-muted focus:outline-none focus:border-neutral-600 transition"
           />
           <input
             value={plate} onChange={e => setPlate(e.target.value)}
             placeholder="Immatriculation (ex: AB-123-CD)" required
-            className="flex-1 min-w-40 px-3 py-2.5 bg-bg-input border border-border-thin rounded-xl text-white text-sm placeholder-txt-muted focus:outline-none focus:border-neutral-600 transition"
+            className="w-full px-3 py-3 bg-bg-input border border-border-thin rounded-xl text-white text-sm placeholder-txt-muted focus:outline-none focus:border-neutral-600 transition"
           />
           <button
             type="submit" disabled={saving}
-            className="flex items-center gap-2 px-4 py-2.5 bg-accent text-black text-xs font-semibold rounded-xl hover:bg-[#d2eb57] transition disabled:opacity-50"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-accent text-black text-sm font-semibold rounded-xl hover:bg-[#d2eb57] transition disabled:opacity-50"
           >
-            {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
             Ajouter
           </button>
         </form>
       </div>
 
-      {/* Table */}
-      <div className="bg-bg-card border border-border-thin rounded-2xl overflow-hidden">
-        {loading ? (
-          <div className="p-10 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-txt-muted" /></div>
-        ) : trucks.length === 0 ? (
-          <div className="p-10 text-center text-txt-muted text-sm">Aucun camion enregistré</div>
-        ) : (
-          <table className="w-full text-left">
-            <thead>
-              <tr className="text-[11px] text-txt-muted border-b border-border-thin uppercase tracking-wider">
-                <th className="px-5 py-3 font-normal">Camion</th>
-                <th className="px-5 py-3 font-normal">Immatriculation</th>
-                <th className="px-5 py-3 font-normal">Ajouté le</th>
-                <th className="px-5 py-3 font-normal text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-900/60 text-xs">
-              {trucks.map(truck => (
-                <tr key={truck.id} className="hover:bg-neutral-800/20 transition-colors">
-                  <td className="px-5 py-3 font-medium text-white">{truck.name}</td>
-                  <td className="px-5 py-3 font-mono text-txt-muted">{truck.plate_number}</td>
-                  <td className="px-5 py-3 text-txt-muted">{new Date(truck.created_at).toLocaleDateString('fr-FR')}</td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => showQR(truck)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-input border border-border-thin hover:border-neutral-600 text-white rounded-lg text-[11px] font-medium transition"
-                      >
-                        <QrCode className="w-3.5 h-3.5 text-txt-muted" /> QR Code
-                      </button>
-                      <button
-                        onClick={() => printQR(truck)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-input border border-border-thin hover:border-neutral-600 text-white rounded-lg text-[11px] font-medium transition"
-                      >
-                        <Printer className="w-3.5 h-3.5 text-txt-muted" /> Imprimer
-                      </button>
-                      <button
-                        onClick={() => deleteTruck(truck.id)}
-                        className="p-1.5 text-txt-muted hover:text-red-400 hover:bg-red-500/10 rounded-lg transition"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
+      {/* Liste */}
+      {loading ? (
+        <div className="p-10 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-txt-muted" /></div>
+      ) : trucks.length === 0 ? (
+        <div className="bg-bg-card border border-border-thin rounded-2xl p-10 text-center text-txt-muted text-sm">
+          Aucun camion enregistré
+        </div>
+      ) : (
+        <>
+          {/* Table desktop */}
+          <div className="hidden md:block bg-bg-card border border-border-thin rounded-2xl overflow-hidden">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-[11px] text-txt-muted border-b border-border-thin uppercase tracking-wider">
+                  <th className="px-5 py-3 font-normal">Camion</th>
+                  <th className="px-5 py-3 font-normal">Immatriculation</th>
+                  <th className="px-5 py-3 font-normal">Ajouté le</th>
+                  <th className="px-5 py-3 font-normal text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+              </thead>
+              <tbody className="divide-y divide-neutral-900/60 text-xs">
+                {trucks.map(truck => (
+                  <tr key={truck.id} className="hover:bg-neutral-800/20 transition-colors">
+                    <td className="px-5 py-3 font-medium text-white">{truck.name}</td>
+                    <td className="px-5 py-3 font-mono text-txt-muted">{truck.plate_number}</td>
+                    <td className="px-5 py-3 text-txt-muted">{new Date(truck.created_at).toLocaleDateString('fr-FR')}</td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => showQR(truck)} className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-input border border-border-thin hover:border-neutral-600 text-white rounded-lg text-[11px] font-medium transition">
+                          <QrCode className="w-3.5 h-3.5 text-txt-muted" /> QR Code
+                        </button>
+                        <button onClick={() => printQR(truck)} className="flex items-center gap-1.5 px-3 py-1.5 bg-bg-input border border-border-thin hover:border-neutral-600 text-white rounded-lg text-[11px] font-medium transition">
+                          <Printer className="w-3.5 h-3.5 text-txt-muted" /> Imprimer
+                        </button>
+                        <button onClick={() => deleteTruck(truck.id)} className="p-1.5 text-txt-muted hover:text-red-400 hover:bg-red-500/10 rounded-lg transition">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Cartes mobile */}
+          <div className="md:hidden space-y-3">
+            {trucks.map(truck => (
+              <div key={truck.id} className="bg-bg-card border border-border-thin rounded-2xl p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="font-semibold text-white">{truck.name}</p>
+                    <p className="font-mono text-xs text-txt-muted mt-0.5">{truck.plate_number}</p>
+                  </div>
+                  <button onClick={() => deleteTruck(truck.id)} className="p-2 text-txt-muted hover:text-red-400 hover:bg-red-500/10 rounded-xl transition">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => showQR(truck)}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-bg-input border border-border-thin text-white rounded-xl text-xs font-medium transition active:scale-95"
+                  >
+                    <QrCode className="w-4 h-4 text-txt-muted" /> QR Code
+                  </button>
+                  <button
+                    onClick={() => printQR(truck)}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-bg-input border border-border-thin text-white rounded-xl text-xs font-medium transition active:scale-95"
+                  >
+                    <Printer className="w-4 h-4 text-txt-muted" /> Imprimer
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {/* Modal QR */}
       {qrModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-bg-card border border-border-thin rounded-2xl p-6 w-full max-w-xs">
+        <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-bg-card border border-border-thin rounded-t-3xl sm:rounded-2xl p-6 w-full sm:max-w-xs"
+            style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
             <div className="flex items-center justify-between mb-5">
               <div>
                 <p className="font-semibold text-white text-sm">{qrModal.name}</p>
@@ -170,9 +198,9 @@ export default function TrucksPage() {
             <p className="text-center text-[11px] text-txt-muted mb-4">Collez ce QR dans le camion</p>
             <button
               onClick={() => printQR(qrModal)}
-              className="w-full flex items-center justify-center gap-2 py-2.5 bg-accent text-black rounded-xl text-xs font-semibold hover:bg-[#d2eb57] transition"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-accent text-black rounded-xl text-sm font-semibold hover:bg-[#d2eb57] transition active:scale-95"
             >
-              <Printer className="w-3.5 h-3.5" /> Imprimer
+              <Printer className="w-4 h-4" /> Imprimer
             </button>
           </div>
         </div>

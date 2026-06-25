@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import type { Profile } from '@/types'
-import { Loader2, Shield, User, Plus, X, ArrowUpRight, AlertCircle } from 'lucide-react'
+import { Loader2, Shield, User, Plus, X, AlertCircle } from 'lucide-react'
 
 export default function WorkersPage() {
   const { loading: authLoading } = useAuth('admin')
@@ -32,40 +32,44 @@ export default function WorkersPage() {
     setError('')
     setSuccess('')
 
-    // Étape 1 : créer le compte auth
-    const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: { data: { full_name: form.full_name, role: 'worker' } },
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const SERVICE_KEY  = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_KEY!
+
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SERVICE_KEY}`,
+        'apikey': SERVICE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: form.email,
+        password: form.password,
+        email_confirm: true,
+        user_metadata: { full_name: form.full_name, role: 'worker' },
+      }),
     })
 
-    if (signUpErr) {
-      // Si "signups disabled" → essayer de créer le profil manuellement
-      // pour les utilisateurs déjà créés côté Supabase par d'autres moyens
-      setError(`Erreur Supabase : ${signUpErr.message}. Active les inscriptions email dans Supabase → Authentication → Providers → Email.`)
+    const newUser = await res.json()
+
+    if (!res.ok || !newUser.id) {
+      const msg = newUser.msg || newUser.message || 'Erreur lors de la création'
+      setError(msg.includes('already') ? 'Email déjà utilisé' : msg)
       setSaving(false)
       return
     }
 
-    // Étape 2 : insérer profil
-    if (signUpData.user) {
-      const { error: profileErr } = await supabase.from('profiles').upsert({
-        id: signUpData.user.id,
-        full_name: form.full_name,
-        role: 'worker',
-      }, { onConflict: 'id' })
+    await supabase.from('profiles').upsert({
+      id: newUser.id,
+      full_name: form.full_name,
+      role: 'worker',
+    }, { onConflict: 'id' })
 
-      if (profileErr) {
-        setError(`Compte créé mais profil échoué : ${profileErr.message}`)
-      } else {
-        setSuccess(`Compte créé pour ${form.full_name} ! L'ouvrier peut maintenant se connecter.`)
-        setForm({ full_name: '', email: '', password: '' })
-        setShowForm(false)
-        load()
-      }
-    }
-
+    setSuccess(`✓ Compte créé pour ${form.full_name}. Connexion immédiate possible.`)
+    setForm({ full_name: '', email: '', password: '' })
+    setShowForm(false)
     setSaving(false)
+    load()
   }
 
   if (authLoading) return <div className="flex items-center justify-center h-40"><Loader2 className="w-5 h-5 animate-spin text-txt-muted" /></div>
@@ -81,48 +85,49 @@ export default function WorkersPage() {
         </div>
         <button
           onClick={() => { setShowForm(!showForm); setError(''); setSuccess('') }}
-          className="flex items-center gap-2 px-4 py-2 bg-accent text-black text-xs font-semibold rounded-xl hover:bg-yellow-300 transition"
+          className="flex items-center gap-2 px-4 py-2.5 bg-accent text-black text-xs font-semibold rounded-xl hover:bg-yellow-300 transition active:scale-95"
         >
           <Plus className="w-3.5 h-3.5" />
-          Créer un compte
+          <span className="hidden sm:inline">Créer un compte</span>
+          <span className="sm:hidden">Ajouter</span>
         </button>
       </div>
 
-      {/* Alerte si signups désactivés */}
-      <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3 flex items-start gap-3">
-        <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-        <div className="text-xs text-amber-300 leading-relaxed">
-          <strong className="text-amber-200">Si tu vois "Email signups are disabled" :</strong><br />
-          Va sur <a href="https://supabase.com/dashboard/project/pomscilzzjnlevrwyvap/auth/providers" target="_blank" className="underline">Supabase → Auth → Providers → Email</a> → active le provider et décoche "Confirm email".
+      {/* Message succès */}
+      {success && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 text-emerald-300 text-sm">
+          {success}
         </div>
-      </div>
+      )}
 
-      {/* Formulaire création */}
+      {/* Formulaire création — bottom sheet sur mobile */}
       {showForm && (
-        <div className="bg-bg-card border border-border-thin rounded-2xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-medium text-white">Nouveau compte ouvrier</h2>
-            <button onClick={() => setShowForm(false)} className="p-1 text-txt-muted hover:text-white transition">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center sm:p-4"
+          onClick={e => { if (e.target === e.currentTarget) setShowForm(false) }}>
+          <div className="bg-bg-card border border-border-thin rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md p-5"
+            style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-sm font-semibold text-white">Nouveau compte ouvrier</h2>
+              <button onClick={() => setShowForm(false)} className="p-1.5 text-txt-muted hover:text-white transition rounded-lg">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
-          <form onSubmit={createWorker} className="space-y-3">
-            <div className="grid grid-cols-3 gap-3">
+            <form onSubmit={createWorker} className="space-y-3">
               <div>
                 <label className="block text-[10px] text-txt-muted mb-1.5 uppercase tracking-wider">Nom complet</label>
                 <input
                   value={form.full_name} onChange={e => setForm(f => ({ ...f, full_name: e.target.value }))}
                   required placeholder="Prénom Nom"
-                  className="w-full px-3 py-2.5 bg-bg-input border border-border-thin rounded-xl text-white text-sm placeholder-txt-muted focus:outline-none focus:ring-1 focus:ring-accent/50 transition"
+                  className="w-full px-3 py-3 bg-bg-input border border-border-thin rounded-xl text-white text-sm placeholder-txt-muted focus:outline-none focus:ring-1 focus:ring-accent/50 transition"
                 />
               </div>
               <div>
                 <label className="block text-[10px] text-txt-muted mb-1.5 uppercase tracking-wider">Email</label>
                 <input
-                  type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  type="text" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                   required placeholder="nom@email.fr"
-                  className="w-full px-3 py-2.5 bg-bg-input border border-border-thin rounded-xl text-white text-sm placeholder-txt-muted focus:outline-none focus:ring-1 focus:ring-accent/50 transition"
+                  className="w-full px-3 py-3 bg-bg-input border border-border-thin rounded-xl text-white text-sm placeholder-txt-muted focus:outline-none focus:ring-1 focus:ring-accent/50 transition"
                 />
               </div>
               <div>
@@ -130,34 +135,29 @@ export default function WorkersPage() {
                 <input
                   type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
                   required minLength={6} placeholder="Min. 6 caractères"
-                  className="w-full px-3 py-2.5 bg-bg-input border border-border-thin rounded-xl text-white text-sm placeholder-txt-muted focus:outline-none focus:ring-1 focus:ring-accent/50 transition"
+                  className="w-full px-3 py-3 bg-bg-input border border-border-thin rounded-xl text-white text-sm placeholder-txt-muted focus:outline-none focus:ring-1 focus:ring-accent/50 transition"
                 />
               </div>
-            </div>
 
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5 text-red-300 text-xs">{error}</div>
-            )}
-            {success && (
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2.5 text-emerald-300 text-xs">{success}</div>
-            )}
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5 text-red-300 text-xs">{error}</div>
+              )}
 
-            <button
-              type="submit" disabled={saving}
-              className="flex items-center gap-2 px-4 py-2.5 bg-accent text-black text-xs font-semibold rounded-xl hover:bg-yellow-300 transition disabled:opacity-50"
-            >
-              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-              {saving ? 'Création...' : 'Créer le compte'}
-            </button>
-          </form>
+              <button
+                type="submit" disabled={saving}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-accent text-black text-sm font-semibold rounded-xl hover:bg-yellow-300 transition disabled:opacity-50 active:scale-95"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                {saving ? 'Création...' : 'Créer le compte'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
 
-      {/* Table */}
-      <div className="bg-bg-card border border-border-thin rounded-2xl overflow-hidden">
-        {loading ? (
-          <div className="p-10 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-txt-muted" /></div>
-        ) : (
+      {/* Table desktop */}
+      {!loading && (
+        <div className="hidden md:block bg-bg-card border border-border-thin rounded-2xl overflow-hidden">
           <table className="w-full text-left">
             <thead>
               <tr className="text-[11px] text-txt-muted border-b border-border-thin font-medium uppercase tracking-wider">
@@ -191,8 +191,36 @@ export default function WorkersPage() {
               ))}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Cartes mobile */}
+      {!loading && (
+        <div className="md:hidden space-y-3">
+          {workers.length === 0 && (
+            <div className="bg-bg-card border border-border-thin rounded-2xl p-8 text-center text-txt-muted text-sm">
+              Aucun ouvrier
+            </div>
+          )}
+          {workers.map(w => (
+            <div key={w.id} className="bg-bg-card border border-border-thin rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-bg-input flex items-center justify-center shrink-0">
+                {w.role === 'admin'
+                  ? <Shield className="w-5 h-5 text-accent" />
+                  : <User className="w-5 h-5 text-txt-muted" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-semibold text-sm truncate">{w.full_name}</p>
+                <p className="text-txt-muted text-[11px] mt-0.5">
+                  {w.role === 'admin' ? 'Administrateur' : 'Ouvrier'} · {new Date(w.created_at).toLocaleDateString('fr-FR')}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {loading && <div className="flex justify-center py-12"><Loader2 className="w-5 h-5 animate-spin text-txt-muted" /></div>}
     </div>
   )
 }
