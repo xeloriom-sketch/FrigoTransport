@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import type { TruckPosition } from '@/types'
-import { Truck, Users, Activity, MapPin, Clock, ArrowUpRight, CheckCircle, Radio } from 'lucide-react'
+import { Truck, Users, Activity, MapPin, Clock, ArrowUpRight, CheckCircle } from 'lucide-react'
 
 const LiveMap = dynamic(() => import('@/components/LiveMap'), { ssr: false })
 
@@ -79,17 +79,7 @@ export default function AdminDashboard() {
     <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[300px_1fr] lg:gap-4 lg:items-start">
 
       {/* ── CARTE (mobile: en premier, pleine largeur) ── */}
-      <div className="lg:hidden bg-[#111213] rounded-2xl relative overflow-hidden border border-border-thin" style={{ height: 260 }}>
-        <div className="absolute top-3 left-3 z-10 flex gap-2">
-          <div className="bg-white text-black px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xl text-xs font-medium">
-            <MapPin className="w-3 h-3 text-neutral-500" />
-            <span>Suivi en direct</span>
-          </div>
-          <div className="bg-bg-card border border-border-thin text-white px-2.5 py-1.5 rounded-full flex items-center gap-1 text-xs">
-            <Radio className="w-3 h-3 text-accent" />
-            <span className="font-medium">{positions.length}</span>
-          </div>
-        </div>
+      <div className="lg:hidden rounded-2xl relative overflow-hidden border border-border-thin" style={{ height: 260 }}>
         <div className="h-full">
           <LiveMap positions={positions} />
         </div>
@@ -223,21 +213,7 @@ export default function AdminDashboard() {
       <div className="space-y-4">
 
         {/* CARTE DESKTOP */}
-        <div className="hidden lg:block bg-[#111213] rounded-3xl h-[520px] relative overflow-hidden border border-border-thin">
-          <div className="absolute top-4 left-4 z-10 flex gap-2">
-            <div className="bg-white text-black px-4 py-2 rounded-full flex items-center gap-2 shadow-xl text-xs font-medium">
-              <MapPin className="w-3 h-3 text-neutral-500" />
-              <span>Suivi en direct</span>
-            </div>
-            <div className="bg-bg-card border border-border-thin text-white px-3 py-2 rounded-full flex items-center gap-1.5 text-xs">
-              <Radio className="w-3 h-3 text-accent" />
-              <span className="font-medium">{positions.length} camions</span>
-            </div>
-          </div>
-          <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-1">
-            <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center shadow-lg font-bold text-sm hover:bg-neutral-100 transition">+</button>
-            <button className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center shadow-lg font-bold text-sm hover:bg-neutral-100 transition">−</button>
-          </div>
+        <div className="hidden lg:block rounded-3xl h-[520px] relative overflow-hidden border border-border-thin">
           <div className="h-full">
             <LiveMap positions={positions} />
           </div>
