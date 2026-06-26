@@ -121,7 +121,7 @@ export default function AdminDashboard() {
       {/* ── CARTE (mobile: en premier, pleine largeur) ── */}
       <div className="lg:hidden rounded-2xl relative overflow-hidden border border-border-thin" style={{ height: 260 }}>
         <div className="h-full">
-          <LiveMap ref={mapRef} positions={positions} onRefresh={loadData} focusTruckId={focusTruckId} />
+          <LiveMap ref={mapRef} positions={positions} onRefresh={loadData} focusTruckId={focusTruckId} darkMode={true} />
         </div>
       </div>
 
@@ -231,7 +231,7 @@ export default function AdminDashboard() {
             {positions.slice(0, 5).map(pos => (
               <button
                 key={pos.truck_id}
-                onClick={() => { setFocusTruckId(pos.truck_id); mapRef.current?.flyTo(pos.latitude, pos.longitude) }}
+                onClick={() => { setFocusTruckId(pos.truck_id); mapRef.current?.flyTo(pos.latitude, pos.longitude, 17) }}
                 className="w-full flex items-center gap-3 py-2 border-b border-border-thin last:border-0 hover:bg-bg-input/30 rounded-lg px-1 -mx-1 transition text-left"
               >
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${pos.is_active !== false ? 'bg-accent/15' : 'bg-bg-input'}`}>
@@ -259,7 +259,7 @@ export default function AdminDashboard() {
         {/* CARTE DESKTOP */}
         <div className="hidden lg:block rounded-3xl h-[520px] relative overflow-hidden border border-border-thin">
           <div className="h-full">
-            <LiveMap ref={mapRef} positions={positions} onRefresh={loadData} focusTruckId={focusTruckId} />
+            <LiveMap ref={mapRef} positions={positions} onRefresh={loadData} focusTruckId={focusTruckId} darkMode={true} />
           </div>
         </div>
 

@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react'
 import { RefreshCw, X, Sparkles } from 'lucide-react'
 
 // ⬆️ INCRÉMENTER ICI à chaque déploiement + mettre à jour CHANGELOG
-const APP_VERSION = '1.4.0'
+const APP_VERSION = '1.5.0'
 const CHANGELOG = [
-  'Suppression d\'ouvriers depuis le tableau de bord',
-  'Correction 404 sur PC après connexion',
-  'Scanner QR amélioré (fonctionne sur tous les téléphones)',
-  'Erreurs du scanner visibles au centre de l\'écran',
-  'Safe area Dynamic Island iPhone + barre Android',
-  'Menu profil au-dessus de la carte (z-index corrigé)',
+  'Carte détaillée style Google Maps (rues, bâtiments)',
+  'GPS toutes les 5s — suivi fluide en temps réel',
+  'Zoom automatique sur la rue quand on clique un camion',
+  'Marqueur animé — déplacement fluide sur la carte',
+  'Carte pour l\'ouvrier — voir sa propre position en direct',
+  'Modales centrées avec animation (suppression ouvrier)',
 ]
 
 export default function PWAUpdater() {

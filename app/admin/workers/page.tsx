@@ -107,10 +107,11 @@ export default function WorkersPage() {
 
       {/* Modal création */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center sm:p-4"
+        <div className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4"
+          style={{ animation: 'fadeIn .15s ease' }}
           onClick={e => { if (e.target === e.currentTarget) setShowForm(false) }}>
-          <div className="bg-bg-card border border-border-thin rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md p-5"
-            style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+          <div className="bg-bg-card border border-border-thin rounded-3xl w-full max-w-md p-5"
+            style={{ animation: 'slideUp .2s ease', paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-sm font-semibold text-white">Nouveau compte ouvrier</h2>
               <button onClick={() => setShowForm(false)} className="p-1.5 text-txt-muted hover:text-white transition rounded-lg"><X className="w-4 h-4" /></button>
@@ -144,10 +145,11 @@ export default function WorkersPage() {
 
       {/* Modal confirmation suppression */}
       {deleteTarget && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center sm:p-4"
+        <div className="fixed inset-0 bg-black/75 z-[9999] flex items-center justify-center p-4"
+          style={{ animation: 'fadeIn .15s ease' }}
           onClick={e => { if (e.target === e.currentTarget && !deleting) setDeleteTarget(null) }}>
-          <div className="bg-bg-card border border-border-thin rounded-t-3xl sm:rounded-2xl w-full sm:max-w-sm p-5"
-            style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+          <div className="bg-bg-card border border-border-thin rounded-3xl w-full max-w-sm p-5"
+            style={{ animation: 'slideUp .2s ease', paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 bg-red-500/15 border border-red-500/20 rounded-2xl flex items-center justify-center shrink-0">
                 <AlertTriangle className="w-6 h-6 text-red-400" />

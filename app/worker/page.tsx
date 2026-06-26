@@ -119,7 +119,7 @@ export default function WorkerPage() {
           is_active: true,
         })
         const now = Date.now()
-        if (now - lastSentRef.current < 30_000) return
+        if (now - lastSentRef.current < 5_000) return
         lastSentRef.current = now
         await supabase.from('locations').insert({
           assignment_id: assign.id,
@@ -611,8 +611,8 @@ export default function WorkerPage() {
         </button>
 
         {showMap && myPosition && (
-          <div className="rounded-2xl overflow-hidden border border-border-thin" style={{ height: 220 }}>
-            <LiveMap positions={[myPosition]} />
+          <div className="rounded-2xl overflow-hidden border border-border-thin" style={{ height: 260 }}>
+            <LiveMap positions={[myPosition]} followActive={true} darkMode={false} />
           </div>
         )}
 

@@ -52,3 +52,8 @@ html, body {
 
 /* Tap highlight supprimé sur mobile */
 * { -webkit-tap-highlight-color: transparent; }
+
+/* Animations modales */
+@keyframes fadeIn  { from { opacity:0 }              to { opacity:1 } }
+@keyframes slideUp { from { transform:translateY(24px);opacity:0 } to { transform:translateY(0);opacity:1 } }
+@keyframes slideDown { from { transform:translateY(-16px);opacity:0 } to { transform:translateY(0);opacity:1 } }
