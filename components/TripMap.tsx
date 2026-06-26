@@ -19,19 +19,33 @@ export default function TripMap({ points }: Props) {
 
     mapRef.current = L.map(containerId.current, {
       zoomControl: false,
-      attributionControl: false,
+      attributionControl: true,
     })
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom: 20,
-      subdomains: 'abcd',
-    }).addTo(mapRef.current)
-
-    L.control.attribution({ prefix: false, position: 'bottomright' })
-      .addAttribution('<span style="font-size:9px;opacity:.35">© CARTO · OSM</span>')
-      .addTo(mapRef.current)
-
     L.control.zoom({ position: 'bottomleft' }).addTo(mapRef.current)
+
+    const loadScript = (src: string) => new Promise<void>((res, rej) => {
+      if (document.querySelector(`script[src*="maps.googleapis.com"]`) && src.includes('googleapis')) { res(); return }
+      if (document.querySelector(`script[src*="GoogleMutant"]`) && src.includes('GoogleMutant')) { res(); return }
+      const s = document.createElement('script')
+      s.src = src; s.onload = () => res(); s.onerror = () => rej()
+      document.head.appendChild(s)
+    });
+
+    (async () => {
+      try {
+        const key = 'AIzaSyBplAYmn_oV0dMR4ZcZr0ZeTXFvMxZmVrU'
+        await loadScript(`https://maps.googleapis.com/maps/api/js?key=${key}&loading=async`)
+        await loadScript('https://unpkg.com/leaflet.gridlayer.googlemutant@0.13.5/dist/Leaflet.GoogleMutant.js')
+        if (!mapRef.current) return
+        ;(L as any).gridLayer.googleMutant({ type: 'roadmap', maxZoom: 22 }).addTo(mapRef.current)
+      } catch {
+        if (!mapRef.current) return
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 20, subdomains: 'abcd',
+        }).addTo(mapRef.current)
+      }
+    })()
 
     // ── Dessiner le trajet avec segments colorés par vitesse ─────────────
     const validPts = points.filter(p => !(Math.abs(p.latitude) < 0.001 && Math.abs(p.longitude) < 0.001))
