@@ -1,31 +1,35 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Truck, Clock, MapPin, CheckCircle, LogOut, Snowflake, Camera, QrCode, X, AlertCircle, Navigation } from 'lucide-react'
 import InstallPWA from '@/components/InstallPWA'
+import WorkerNavigation from '@/components/WorkerNavigation'
 import type { TruckPosition } from '@/types'
 
 const LiveMap = dynamic(() => import('@/components/LiveMap'), { ssr: false })
 
-type Screen = 'loading' | 'active' | 'done' | 'no_truck' | 'scanning'
+type Screen  = 'loading' | 'active' | 'done' | 'no_truck' | 'scanning'
+type Tab     = 'service' | 'navigation'
 
 export default function WorkerPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const [screen, setScreen]           = useState<Screen>('loading')
-  const [profile, setProfile]         = useState<{ full_name: string; id: string } | null>(null)
-  const [assignment, setAssignment]   = useState<any>(null)
-  const [elapsed, setElapsed]         = useState('')
-  const [gpsActive, setGpsActive]     = useState(false)
-  const [stopping, setStopping]       = useState(false)
-  const [scanError, setScanError]     = useState('')
-  const [scanStatus, setScanStatus]   = useState<'idle' | 'scanning' | 'found'>('idle')
-  const [myPosition, setMyPosition]   = useState<TruckPosition | null>(null)
-  const [showMap, setShowMap]         = useState(false)
+  const [screen, setScreen]             = useState<Screen>('loading')
+  const [tab, setTab]                   = useState<Tab>('service')
+  const [profile, setProfile]           = useState<{ full_name: string; id: string } | null>(null)
+  const [assignment, setAssignment]     = useState<any>(null)
+  const [elapsed, setElapsed]           = useState('')
+  const [gpsActive, setGpsActive]       = useState(false)
+  const [stopping, setStopping]         = useState(false)
+  const [scanError, setScanError]       = useState('')
+  const [scanStatus, setScanStatus]     = useState<'idle' | 'scanning' | 'found'>('idle')
+  const [myPosition, setMyPosition]     = useState<TruckPosition | null>(null)
+  const [showMap, setShowMap]           = useState(false)
+  const [adminDestination, setAdminDest] = useState<{address:string;lat:number;lng:number} | null>(null)
 
   const watchIdRef    = useRef<number | null>(null)
   const lastSentRef   = useRef<number>(0)
@@ -71,6 +75,18 @@ export default function WorkerPage() {
     } else {
       setScreen('no_truck')
     }
+
+    // Écouter les destinations envoyées par l'admin via Realtime broadcast
+    const channel = supabase.channel(`worker-dest-${user.id}`)
+      .on('broadcast', { event: 'set_destination' }, ({ payload }) => {
+        if (payload?.address) {
+          setAdminDest({ address: payload.address, lat: payload.lat, lng: payload.lng })
+          setTab('navigation') // Basculer automatiquement sur l'onglet Navigation
+        }
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }
 
   // ── GPS ─────────────────────────────────────────────────────────────────────
@@ -556,7 +572,8 @@ export default function WorkerPage() {
           <h1 className="text-4xl font-bold text-white tracking-tight">{firstName}</h1>
         </div>
 
-        <div className="bg-bg-card border border-border-thin rounded-3xl p-5 mb-4">
+        <div className="bg-bg-card border border-border-thin rounded-3xl p-5 mb-4"
+          style={{ animation: 'fadeInUp .4s cubic-bezier(0.22,1,0.36,1) both' }}>
           <div className="flex items-center gap-3 mb-4">
             <div className="w-11 h-11 bg-bg-input border border-border-thin rounded-2xl flex items-center justify-center">
               <Truck className="w-5 h-5 text-txt-muted" />
@@ -594,7 +611,8 @@ export default function WorkerPage() {
         </div>
 
         {/* Prise de poste */}
-        <div className="bg-bg-card border border-border-thin rounded-2xl px-4 py-3 flex items-center justify-between">
+        <div className="bg-bg-card border border-border-thin rounded-2xl px-4 py-3 flex items-center justify-between"
+          style={{ animation: 'fadeInUp .4s cubic-bezier(0.22,1,0.36,1) both', animationDelay: '60ms' }}>
           <span className="text-txt-muted text-xs">Prise de poste</span>
           <span className="text-white text-xs font-medium">
             {assignment && new Date(assignment.started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}

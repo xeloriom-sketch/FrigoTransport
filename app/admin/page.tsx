@@ -132,8 +132,9 @@ export default function AdminDashboard() {
           { icon: Users, label: 'Ouvriers', value: totalWorkers },
           { icon: Activity, label: 'En service', value: assignments.length },
           { icon: MapPin, label: 'Positions GPS', value: positions.length },
-        ].map(({ icon: Icon, label, value }) => (
-          <div key={label} className="bg-bg-card border border-border-thin rounded-2xl p-4 flex items-center gap-3">
+        ].map(({ icon: Icon, label, value }, idx) => (
+          <div key={label} className="bg-bg-card border border-border-thin rounded-2xl p-4 flex items-center gap-3"
+            style={{ animation: 'fadeInUp .4s cubic-bezier(0.22,1,0.36,1) both', animationDelay: `${idx * 55}ms` }}>
             <div className="w-9 h-9 bg-bg-input rounded-xl flex items-center justify-center shrink-0">
               <Icon className="w-4 h-4 text-txt-muted" />
             </div>
@@ -228,11 +229,12 @@ export default function AdminDashboard() {
             {positions.length === 0 && (
               <p className="text-txt-muted text-xs text-center py-4">Aucune position enregistrée</p>
             )}
-            {positions.slice(0, 5).map(pos => (
+            {positions.slice(0, 5).map((pos, i) => (
               <button
                 key={pos.truck_id}
                 onClick={() => { setFocusTruckId(pos.truck_id); mapRef.current?.flyTo(pos.latitude, pos.longitude, 17) }}
                 className="w-full flex items-center gap-3 py-2 border-b border-border-thin last:border-0 hover:bg-bg-input/30 rounded-lg px-1 -mx-1 transition text-left"
+                style={{ animation: 'slideInLeft .35s cubic-bezier(0.22,1,0.36,1) both', animationDelay: `${i * 60}ms` }}
               >
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${pos.is_active !== false ? 'bg-accent/15' : 'bg-bg-input'}`}>
                   <Truck className={`w-3.5 h-3.5 ${pos.is_active !== false ? 'text-accent' : 'text-txt-muted'}`} />
@@ -301,10 +303,11 @@ export default function AdminDashboard() {
                 {filteredAssignments.length === 0 && (
                   <tr><td colSpan={6} className="py-8 text-center text-txt-muted">Aucune affectation</td></tr>
                 )}
-                {filteredAssignments.map(a => {
+                {filteredAssignments.map((a, i) => {
                   const duration = getDuration(a.started_at, a.ended_at)
                   return (
-                    <tr key={a.id} className="hover:bg-neutral-800/20 transition-colors">
+                    <tr key={a.id} className="hover:bg-neutral-800/20 transition-colors"
+                      style={{ animation: 'fadeInUp .35s cubic-bezier(0.22,1,0.36,1) both', animationDelay: `${i * 45}ms` }}>
                       <td className="py-3">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 bg-bg-input rounded-lg flex items-center justify-center">
