@@ -49,11 +49,12 @@ const LiveMap = forwardRef<LiveMapHandle, Props>(({
 
     // Charger Google Maps API puis GoogleMutant de façon robuste
     const loadScript = (src: string, readyCheck: () => boolean) => new Promise<void>((res, rej) => {
-      // Déjà chargé et disponible
       if (readyCheck()) { res(); return }
-      // Script présent dans le DOM mais encore en cours de chargement
-      const existing = document.querySelector(`script[src*="${src.split('?')[0].split('/').pop()}"]`) as HTMLScriptElement | null
+      // Cherche le script par URL exacte (sans query string) — évite les faux positifs sur *.js
+      const baseUrl  = src.split('?')[0]
+      const existing = document.querySelector(`script[src^="${baseUrl}"]`) as HTMLScriptElement | null
       if (existing) {
+        if (readyCheck()) { res(); return }
         existing.addEventListener('load',  () => res())
         existing.addEventListener('error', () => rej(new Error('script error')))
         return

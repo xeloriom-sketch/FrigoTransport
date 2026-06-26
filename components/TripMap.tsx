@@ -26,8 +26,10 @@ export default function TripMap({ points }: Props) {
 
     const loadScript = (src: string, readyCheck: () => boolean) => new Promise<void>((res, rej) => {
       if (readyCheck()) { res(); return }
-      const existing = document.querySelector(`script[src*="${src.split('?')[0].split('/').pop()}"]`) as HTMLScriptElement | null
+      const baseUrl  = src.split('?')[0]
+      const existing = document.querySelector(`script[src^="${baseUrl}"]`) as HTMLScriptElement | null
       if (existing) {
+        if (readyCheck()) { res(); return }
         existing.addEventListener('load', () => res())
         existing.addEventListener('error', () => rej())
         return

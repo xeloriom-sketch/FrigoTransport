@@ -62,7 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* Préconnexion aux services externes pour démarrage rapide */}
         <link rel="preconnect" href="https://maps.googleapis.com" />
-        <link rel="preconnect" href="https://maps.gstatic.com" crossOrigin="" />
+        <link rel="preconnect" href="https://maps.gstatic.com" />
         <link rel="preconnect" href="https://pomscilzzjnlevrwyvap.supabase.co" />
         <link rel="dns-prefetch" href="https://unpkg.com" />
       </head>
