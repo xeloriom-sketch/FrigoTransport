@@ -4,13 +4,14 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Truck, Users, LayoutDashboard, Snowflake, LogOut, Settings, ChevronDown, X, Loader2 } from 'lucide-react'
+import { Truck, Users, LayoutDashboard, Snowflake, LogOut, Settings, ChevronDown, X, Loader2, Route } from 'lucide-react'
 import clsx from 'clsx'
 
 const nav = [
   { href: '/admin/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/trucks/', label: 'Camions', icon: Truck },
   { href: '/admin/workers/', label: 'Ouvriers', icon: Users },
+  { href: '/admin/history/', label: 'Historique', icon: Route },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
