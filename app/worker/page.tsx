@@ -1,10 +1,14 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Truck, Clock, MapPin, CheckCircle, LogOut, Snowflake, Camera, QrCode, X, AlertCircle } from 'lucide-react'
+import { Truck, Clock, MapPin, CheckCircle, LogOut, Snowflake, Camera, QrCode, X, AlertCircle, Navigation } from 'lucide-react'
 import InstallPWA from '@/components/InstallPWA'
+import type { TruckPosition } from '@/types'
+
+const LiveMap = dynamic(() => import('@/components/LiveMap'), { ssr: false })
 
 type Screen = 'loading' | 'active' | 'done' | 'no_truck' | 'scanning'
 
@@ -12,17 +16,20 @@ export default function WorkerPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  const [screen, setScreen]       = useState<Screen>('loading')
-  const [profile, setProfile]     = useState<{ full_name: string; id: string } | null>(null)
-  const [assignment, setAssignment] = useState<any>(null)
-  const [elapsed, setElapsed]     = useState('')
-  const [gpsActive, setGpsActive] = useState(false)
-  const [stopping, setStopping]   = useState(false)
-  const [scanError, setScanError] = useState('')
-  const [scanStatus, setScanStatus] = useState<'idle' | 'scanning' | 'found'>('idle')
+  const [screen, setScreen]           = useState<Screen>('loading')
+  const [profile, setProfile]         = useState<{ full_name: string; id: string } | null>(null)
+  const [assignment, setAssignment]   = useState<any>(null)
+  const [elapsed, setElapsed]         = useState('')
+  const [gpsActive, setGpsActive]     = useState(false)
+  const [stopping, setStopping]       = useState(false)
+  const [scanError, setScanError]     = useState('')
+  const [scanStatus, setScanStatus]   = useState<'idle' | 'scanning' | 'found'>('idle')
+  const [myPosition, setMyPosition]   = useState<TruckPosition | null>(null)
+  const [showMap, setShowMap]         = useState(false)
 
   const watchIdRef    = useRef<number | null>(null)
   const lastSentRef   = useRef<number>(0)
+  const wakeLockRef   = useRef<any>(null)
   const videoRef      = useRef<HTMLVideoElement>(null)
   const streamRef     = useRef<MediaStream | null>(null)
   const rafRef        = useRef<number | null>(null)
@@ -68,11 +75,49 @@ export default function WorkerPage() {
 
   // ── GPS ─────────────────────────────────────────────────────────────────────
 
+  async function acquireWakeLock() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen')
+      }
+    } catch {}
+  }
+
   function startGPS(userId: string, assign: any) {
     if (!('geolocation' in navigator)) return
+
+    // Garder l'écran allumé (évite la veille qui coupe le GPS)
+    acquireWakeLock()
+
+    // Re-acquérir le wake lock si l'app revient au premier plan
+    const handleVisibility = async () => {
+      if (document.visibilityState === 'visible') {
+        await acquireWakeLock()
+        // Redémarrer watchPosition si nécessaire
+        if (watchIdRef.current === null) {
+          startGPS(userId, assign)
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
     watchIdRef.current = navigator.geolocation.watchPosition(
       async (pos) => {
         setGpsActive(true)
+        // Mettre à jour la carte en temps réel
+        setMyPosition({
+          truck_id: assign.truck_id,
+          truck_name: assign.truck?.name ?? 'Mon camion',
+          plate_number: assign.truck?.plate_number ?? '',
+          worker_name: profile?.full_name ?? 'Moi',
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy ?? null,
+          speed: pos.coords.speed ?? null,
+          recorded_at: new Date().toISOString(),
+          assignment_id: assign.id,
+          is_active: true,
+        })
         const now = Date.now()
         if (now - lastSentRef.current < 30_000) return
         lastSentRef.current = now
@@ -87,8 +132,8 @@ export default function WorkerPage() {
           heading: pos.coords.heading ?? null,
         })
       },
-      () => {},
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+      (err) => { console.warn('GPS error:', err.code) },
+      { enableHighAccuracy: true, maximumAge: 10_000, timeout: 20000 }
     )
   }
 
@@ -97,7 +142,12 @@ export default function WorkerPage() {
       navigator.geolocation.clearWatch(watchIdRef.current)
       watchIdRef.current = null
     }
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release?.().catch(() => {})
+      wakeLockRef.current = null
+    }
     setGpsActive(false)
+    setMyPosition(null)
   }
 
   // ── SCANNER QR ───────────────────────────────────────────────────────────────
@@ -543,13 +593,36 @@ export default function WorkerPage() {
           </div>
         </div>
 
-        <div className="bg-bg-card border border-border-thin rounded-2xl px-4 py-3 flex items-center justify-between mb-8">
+        {/* Prise de poste */}
+        <div className="bg-bg-card border border-border-thin rounded-2xl px-4 py-3 flex items-center justify-between">
           <span className="text-txt-muted text-xs">Prise de poste</span>
           <span className="text-white text-xs font-medium">
             {assignment && new Date(assignment.started_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
           </span>
         </div>
 
+        {/* Carte de position — toggle */}
+        <button
+          onClick={() => setShowMap(v => !v)}
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-bg-card border border-border-thin text-txt-muted text-xs font-medium rounded-2xl hover:text-white hover:border-neutral-600 transition"
+        >
+          <Navigation className="w-3.5 h-3.5" />
+          {showMap ? 'Masquer ma position' : 'Voir ma position sur la carte'}
+        </button>
+
+        {showMap && myPosition && (
+          <div className="rounded-2xl overflow-hidden border border-border-thin" style={{ height: 220 }}>
+            <LiveMap positions={[myPosition]} />
+          </div>
+        )}
+
+        {showMap && !myPosition && (
+          <div className="rounded-2xl border border-border-thin bg-bg-card p-6 text-center">
+            <p className="text-txt-muted text-xs">En attente du signal GPS...</p>
+          </div>
+        )}
+
+        {/* Bouton Camion rangé */}
         <button
           onClick={handleCamionRange}
           disabled={stopping}
@@ -564,7 +637,7 @@ export default function WorkerPage() {
 
         <button
           onClick={handleLogout}
-          className="mt-5 w-full flex items-center justify-center gap-2 py-2 text-txt-muted text-xs hover:text-white transition rounded-xl"
+          className="mt-2 w-full flex items-center justify-center gap-2 py-2 text-txt-muted text-xs hover:text-white transition rounded-xl"
         >
           <LogOut className="w-3.5 h-3.5" /> Se déconnecter
         </button>

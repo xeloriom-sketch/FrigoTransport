@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/useAuth'
 import type { TruckPosition } from '@/types'
-import { Truck, Users, Activity, MapPin, Clock, ArrowUpRight, CheckCircle } from 'lucide-react'
+import type { LiveMapHandle } from '@/components/LiveMap'
+import { Truck, Users, Activity, MapPin, ArrowUpRight, CheckCircle } from 'lucide-react'
 
 const LiveMap = dynamic(() => import('@/components/LiveMap'), { ssr: false })
 
@@ -22,31 +23,44 @@ export default function AdminDashboard() {
   const { loading: authLoading } = useAuth('admin')
   const supabase = createClient()
 
-  const [positions, setPositions] = useState<TruckPosition[]>([])
-  const [assignments, setAssignments] = useState<ActiveAssignment[]>([])
+  const [positions, setPositions]         = useState<TruckPosition[]>([])
+  const [assignments, setAssignments]     = useState<ActiveAssignment[]>([])
   const [allAssignments, setAllAssignments] = useState<any[]>([])
-  const [totalTrucks, setTotalTrucks] = useState(0)
-  const [totalWorkers, setTotalWorkers] = useState(0)
-  const [tab, setTab] = useState<TabFilter>('Actifs')
+  const [totalTrucks, setTotalTrucks]     = useState(0)
+  const [totalWorkers, setTotalWorkers]   = useState(0)
+  const [tab, setTab]                     = useState<TabFilter>('Actifs')
+  const [focusTruckId, setFocusTruckId]  = useState<string | null>(null)
+  const mapRef = useRef<LiveMapHandle>(null)
 
   const loadData = useCallback(async () => {
     const [posRes, activeRes, allRes, truckCount, workerCount] = await Promise.all([
-      supabase.from('truck_latest_positions').select('*'),
+      // Nouvelle vue : toutes les dernières positions, même camions rangés
+      supabase.from('truck_last_known_positions').select('*'),
       supabase.from('assignments')
         .select('id, started_at, worker:profiles(full_name), truck:trucks(name, plate_number)')
         .eq('is_active', true)
         .order('started_at', { ascending: false }),
+      // 1 seule ligne par camion (dernier utilisateur)
       supabase.from('assignments')
-        .select('id, started_at, ended_at, is_active, worker:profiles(full_name), truck:trucks(name, plate_number)')
+        .select('id, truck_id, started_at, ended_at, is_active, worker:profiles(full_name), truck:trucks(name, plate_number)')
         .order('started_at', { ascending: false })
-        .limit(20),
+        .limit(50),
       supabase.from('trucks').select('id', { count: 'exact', head: true }),
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'worker'),
     ])
 
     if (posRes.data) setPositions(posRes.data as TruckPosition[])
     if (activeRes.data) setAssignments(activeRes.data as any)
-    if (allRes.data) setAllAssignments(allRes.data as any)
+    if (allRes.data) {
+      // Dédupliquer : garder seulement le dernier par camion
+      const seen = new Set<string>()
+      const deduped = (allRes.data as any[]).filter(a => {
+        if (seen.has(a.truck_id)) return false
+        seen.add(a.truck_id)
+        return true
+      })
+      setAllAssignments(deduped)
+    }
     if (truckCount.count != null) setTotalTrucks(truckCount.count)
     if (workerCount.count != null) setTotalWorkers(workerCount.count)
   }, [])
@@ -81,7 +95,7 @@ export default function AdminDashboard() {
       {/* ── CARTE (mobile: en premier, pleine largeur) ── */}
       <div className="lg:hidden rounded-2xl relative overflow-hidden border border-border-thin" style={{ height: 260 }}>
         <div className="h-full">
-          <LiveMap positions={positions} />
+          <LiveMap ref={mapRef} positions={positions} onRefresh={loadData} focusTruckId={focusTruckId} />
         </div>
       </div>
 
@@ -188,22 +202,26 @@ export default function AdminDashboard() {
             {positions.length === 0 && (
               <p className="text-txt-muted text-xs text-center py-4">Aucune position enregistrée</p>
             )}
-            {positions.slice(0, 4).map(pos => (
-              <div key={pos.truck_id} className="flex items-center gap-3 py-2 border-b border-border-thin last:border-0">
-                <div className="w-7 h-7 bg-bg-input rounded-lg flex items-center justify-center shrink-0">
-                  <Truck className="w-3.5 h-3.5 text-txt-muted" />
+            {positions.slice(0, 5).map(pos => (
+              <button
+                key={pos.truck_id}
+                onClick={() => { setFocusTruckId(pos.truck_id); mapRef.current?.flyTo(pos.latitude, pos.longitude) }}
+                className="w-full flex items-center gap-3 py-2 border-b border-border-thin last:border-0 hover:bg-bg-input/30 rounded-lg px-1 -mx-1 transition text-left"
+              >
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${pos.is_active !== false ? 'bg-accent/15' : 'bg-bg-input'}`}>
+                  <Truck className={`w-3.5 h-3.5 ${pos.is_active !== false ? 'text-accent' : 'text-txt-muted'}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[12px] font-medium text-white leading-tight">{pos.truck_name}</p>
-                  <p className="text-[10px] text-txt-muted">{pos.worker_name}</p>
+                  <p className="text-[10px] text-txt-muted">{pos.worker_name} · {pos.is_active !== false ? '● Actif' : '○ Rangé'}</p>
                 </div>
                 <div className="text-right shrink-0">
-                  {pos.speed != null && (
+                  {pos.speed != null && pos.is_active !== false && (
                     <p className="text-[11px] font-medium text-accent">{Math.round(pos.speed * 3.6)} km/h</p>
                   )}
                   <p className="text-[10px] text-txt-muted">{timeAgo(pos.recorded_at)}</p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -215,7 +233,7 @@ export default function AdminDashboard() {
         {/* CARTE DESKTOP */}
         <div className="hidden lg:block rounded-3xl h-[520px] relative overflow-hidden border border-border-thin">
           <div className="h-full">
-            <LiveMap positions={positions} />
+            <LiveMap ref={mapRef} positions={positions} onRefresh={loadData} focusTruckId={focusTruckId} />
           </div>
         </div>
 

@@ -51,4 +51,5 @@ export interface TruckPosition {
   speed: number | null
   recorded_at: string
   assignment_id: string
+  is_active?: boolean
 }
