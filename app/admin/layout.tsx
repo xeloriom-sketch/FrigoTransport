@@ -89,7 +89,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   function ProfileMenu() {
     return (
-      <div className="absolute right-0 top-full mt-2 w-56 bg-bg-card border border-border-thin rounded-2xl shadow-2xl overflow-hidden z-[200]">
+      <div className="absolute right-0 top-full mt-2 w-56 bg-bg-card border border-border-thin rounded-2xl shadow-2xl overflow-hidden z-[9999]">
         <div className="px-4 py-3 border-b border-border-thin">
           <p className="text-sm font-semibold text-white">{userName}</p>
           <p className="text-[11px] text-txt-muted mt-0.5 truncate">{userEmail}</p>
