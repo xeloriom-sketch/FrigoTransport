@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react'
 import { RefreshCw, X, Sparkles } from 'lucide-react'
 
 // ⬆️ INCRÉMENTER ICI à chaque déploiement + mettre à jour CHANGELOG
-const APP_VERSION = '1.5.0'
+const APP_VERSION = '1.6.0'
 const CHANGELOG = [
-  'Carte détaillée style Google Maps (rues, bâtiments)',
-  'GPS toutes les 5s — suivi fluide en temps réel',
-  'Zoom automatique sur la rue quand on clique un camion',
-  'Marqueur animé — déplacement fluide sur la carte',
-  'Carte pour l\'ouvrier — voir sa propre position en direct',
-  'Modales centrées avec animation (suppression ouvrier)',
+  'Flèche camion tourne vers la direction de déplacement (style Uber)',
+  'Animations d\'apparition fluides sur toute l\'interface',
+  'Carte Esri World Street Map — rues, restaurants, bâtiments',
+  'Correction GPS : plus de marqueur dans la mer (filtre coordonnées 0,0)',
+  'Padding corrigé sur les pages Camions et Ouvriers',
+  'Popup carte redessinée avec animation',
 ]
 
 export default function PWAUpdater() {

@@ -58,6 +58,8 @@ export default function AdminDashboard() {
       const lastPos: TruckPosition[] = []
       for (const l of locsRes.data as any[]) {
         if (seen.has(l.truck_id)) continue
+        // Ignorer les coordonnées invalides : (0,0) = GPS sans signal
+        if (!l.latitude || !l.longitude || (Math.abs(l.latitude) < 0.001 && Math.abs(l.longitude) < 0.001)) continue
         seen.add(l.truck_id)
         lastPos.push({
           truck_id: l.truck_id,

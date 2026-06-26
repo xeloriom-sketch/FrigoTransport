@@ -119,17 +119,21 @@ export default function WorkerPage() {
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       async (pos) => {
+        const { latitude, longitude, accuracy, speed, heading } = pos.coords
+        // Ignorer les coordonnées invalides (GPS sans signal = 0,0 ou précision > 300m)
+        if (Math.abs(latitude) < 0.001 && Math.abs(longitude) < 0.001) return
+        if (accuracy != null && accuracy > 300) return
+
         setGpsActive(true)
-        // Mettre à jour la carte en temps réel
         setMyPosition({
           truck_id: assign.truck_id,
           truck_name: assign.truck?.name ?? 'Mon camion',
           plate_number: assign.truck?.plate_number ?? '',
           worker_name: profile?.full_name ?? 'Moi',
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          accuracy: pos.coords.accuracy ?? null,
-          speed: pos.coords.speed ?? null,
+          latitude,
+          longitude,
+          accuracy: accuracy ?? null,
+          speed: speed ?? null,
           recorded_at: new Date().toISOString(),
           assignment_id: assign.id,
           is_active: true,
@@ -141,11 +145,11 @@ export default function WorkerPage() {
           assignment_id: assign.id,
           truck_id: assign.truck_id,
           worker_id: userId,
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-          accuracy: pos.coords.accuracy ?? null,
-          speed: pos.coords.speed ?? null,
-          heading: pos.coords.heading ?? null,
+          latitude,
+          longitude,
+          accuracy: accuracy ?? null,
+          speed: speed ?? null,
+          heading: heading ?? null,
         })
       },
       (err) => { console.warn('GPS error:', err.code) },
