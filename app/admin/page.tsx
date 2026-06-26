@@ -33,9 +33,12 @@ export default function AdminDashboard() {
   const mapRef = useRef<LiveMapHandle>(null)
 
   const loadData = useCallback(async () => {
-    const [posRes, activeRes, allRes, truckCount, workerCount] = await Promise.all([
-      // Nouvelle vue : toutes les dernières positions, même camions rangés
-      supabase.from('truck_last_known_positions').select('*'),
+    const [locsRes, activeRes, allRes, truckCount, workerCount] = await Promise.all([
+      // Dernières positions de TOUS les camions (actifs ET rangés) — via locations + dédup client-side
+      supabase.from('locations')
+        .select('truck_id, latitude, longitude, speed, accuracy, recorded_at, assignment_id, worker_id, truck:trucks(name, plate_number), worker:profiles(full_name), assignment:assignments(is_active)')
+        .order('recorded_at', { ascending: false })
+        .limit(300),
       supabase.from('assignments')
         .select('id, started_at, worker:profiles(full_name), truck:trucks(name, plate_number)')
         .eq('is_active', true)
@@ -49,7 +52,30 @@ export default function AdminDashboard() {
       supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'worker'),
     ])
 
-    if (posRes.data) setPositions(posRes.data as TruckPosition[])
+    // Construire les positions carte : une par camion, la plus récente
+    if (locsRes.data) {
+      const seen = new Set<string>()
+      const lastPos: TruckPosition[] = []
+      for (const l of locsRes.data as any[]) {
+        if (seen.has(l.truck_id)) continue
+        seen.add(l.truck_id)
+        lastPos.push({
+          truck_id: l.truck_id,
+          truck_name: (l.truck as any)?.name ?? '',
+          plate_number: (l.truck as any)?.plate_number ?? '',
+          worker_name: (l.worker as any)?.full_name ?? '',
+          latitude: l.latitude,
+          longitude: l.longitude,
+          accuracy: l.accuracy,
+          speed: l.speed,
+          recorded_at: l.recorded_at,
+          assignment_id: l.assignment_id,
+          is_active: (l.assignment as any)?.is_active ?? false,
+        })
+      }
+      setPositions(lastPos)
+    }
+
     if (activeRes.data) setAssignments(activeRes.data as any)
     if (allRes.data) {
       // Dédupliquer : garder seulement le dernier par camion
