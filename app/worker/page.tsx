@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Truck, Clock, MapPin, CheckCircle, LogOut, Snowflake, Camera, QrCode, X, AlertCircle, Navigation } from 'lucide-react'
+import { Truck, Clock, MapPin, CheckCircle, LogOut, Snowflake, Camera, QrCode, X, AlertCircle, Navigation, BookOpen } from 'lucide-react'
 import InstallPWA from '@/components/InstallPWA'
 import Tutorial from '@/components/Tutorial'
 import WorkerNavigation from '@/components/WorkerNavigation'
@@ -555,13 +555,22 @@ export default function WorkerPage() {
         </button>
       </div>
 
-      {/* Déconnexion discrète */}
-      <button
-        onClick={handleLogout}
-        className="flex items-center justify-center gap-2 text-txt-muted text-xs hover:text-white transition mt-4 mx-auto"
-      >
-        <LogOut className="w-3.5 h-3.5" /> Se déconnecter
-      </button>
+      {/* Actions discrètes en bas */}
+      <div className="flex items-center justify-center gap-6 mt-4">
+        <button
+          onClick={() => window.dispatchEvent(new Event('tutorial-reset:worker-tutorial-v1'))}
+          className="flex items-center gap-1.5 text-txt-muted text-xs hover:text-white transition"
+        >
+          <BookOpen className="w-3.5 h-3.5" /> Guide
+        </button>
+        <span className="text-txt-muted/30 text-xs">·</span>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-1.5 text-txt-muted text-xs hover:text-white transition"
+        >
+          <LogOut className="w-3.5 h-3.5" /> Se déconnecter
+        </button>
+      </div>
 
       <Tutorial
         storageKey="worker-tutorial-v1"

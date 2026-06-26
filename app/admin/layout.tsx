@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Truck, Users, LayoutDashboard, Snowflake, LogOut, Settings, ChevronDown, X, Loader2, Route } from 'lucide-react'
+import { Truck, Users, LayoutDashboard, Snowflake, LogOut, Settings, ChevronDown, X, Loader2, Route, BookOpen } from 'lucide-react'
 import clsx from 'clsx'
 
 const nav = [
@@ -149,7 +149,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
             <span className="text-base font-bold tracking-tight">FrigoTransport.</span>
           </div>
-          <nav className="flex items-center gap-6 text-sm font-medium">
+          <nav id="admin-nav-lg" className="flex items-center gap-6 text-sm font-medium">
             {nav.map(({ href, label, exact }) => {
               const active = exact
                 ? pathname === href || pathname === href.slice(0, -1)
@@ -264,6 +264,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 className="w-full py-3 bg-accent text-black text-sm font-semibold rounded-xl hover:bg-[#d2eb57] transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {savingSettings ? <><Loader2 className="w-4 h-4 animate-spin" /> Enregistrement...</> : 'Enregistrer'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new Event('tutorial-reset:admin-tutorial-v1'))
+                  setShowSettings(false)
+                }}
+                className="w-full py-3 bg-bg-input border border-border-thin text-txt-muted text-sm font-medium rounded-xl hover:text-white hover:border-neutral-600 transition flex items-center justify-center gap-2"
+              >
+                <BookOpen className="w-4 h-4" />
+                Revoir le tutoriel
               </button>
 
               <button

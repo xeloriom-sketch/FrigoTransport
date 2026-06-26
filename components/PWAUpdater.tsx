@@ -22,12 +22,21 @@ export default function PWAUpdater() {
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
 
-    // Afficher le changelog si nouvelle version détectée
+    // Afficher le changelog si nouvelle version détectée — après le tutoriel
     const lastVersion = localStorage.getItem('app-version')
     if (lastVersion !== APP_VERSION) {
-      // Délai pour laisser l'app se charger
-      setTimeout(() => setShowChangelog(true), 1500)
       localStorage.setItem('app-version', APP_VERSION)
+      const tutorialDone =
+        localStorage.getItem('admin-tutorial-v1') ||
+        localStorage.getItem('worker-tutorial-v1')
+      if (tutorialDone) {
+        // Tutoriel déjà vu : afficher directement
+        setTimeout(() => setShowChangelog(true), 1500)
+      } else {
+        // Attendre que le tutoriel se termine (événement global)
+        const onTutorialDone = () => setTimeout(() => setShowChangelog(true), 600)
+        window.addEventListener('tutorial-completed', onTutorialDone, { once: true })
+      }
     }
 
     // Enregistrer le service worker

@@ -30,15 +30,34 @@ export default function Tutorial({ steps, storageKey, onDone }: Props) {
     return () => clearTimeout(t)
   }, [storageKey])
 
-  // Mettre en valeur l'élément cible
+  // Déclenchement manuel via événement (bouton "Revoir le tutoriel")
+  useEffect(() => {
+    const handler = () => {
+      localStorage.removeItem(storageKey)
+      setIdx(0)
+      setRect(null)
+      setVisible(true)
+      setTimeout(() => setEntered(true), 50)
+    }
+    window.addEventListener(`tutorial-reset:${storageKey}`, handler)
+    return () => window.removeEventListener(`tutorial-reset:${storageKey}`, handler)
+  }, [storageKey])
+
+  // Mettre en valeur l'élément cible (supporte plusieurs sélecteurs séparés par virgule)
   useEffect(() => {
     if (!visible) return
     const sel = steps[idx]?.target
     if (!sel) { setRect(null); return }
-    const el = document.querySelector(sel) as HTMLElement | null
+    // Cherche le premier élément visible parmi les sélecteurs
+    const candidates = sel.split(',').map(s => s.trim())
+    let el: HTMLElement | null = null
+    for (const s of candidates) {
+      const found = document.querySelector(s) as HTMLElement | null
+      if (found && found.offsetParent !== null) { el = found; break }
+    }
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      setTimeout(() => setRect(el.getBoundingClientRect()), 400)
+      setTimeout(() => setRect(el!.getBoundingClientRect()), 400)
     } else {
       setRect(null)
     }
@@ -46,6 +65,7 @@ export default function Tutorial({ steps, storageKey, onDone }: Props) {
 
   const done = useCallback(() => {
     localStorage.setItem(storageKey, '1')
+    window.dispatchEvent(new Event('tutorial-completed'))
     setEntered(false)
     setTimeout(() => { setVisible(false); onDone?.() }, 250)
   }, [storageKey, onDone])

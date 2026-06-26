@@ -129,15 +129,15 @@ export default function AdminDashboard() {
           {
             emoji: '🗺️',
             title: 'Carte en temps réel',
-            text: 'Vos camions apparaissent sur Google Maps avec leur direction et vitesse. Appuyez sur un marqueur pour voir les détails.',
-            target: '#admin-map',
+            text: 'Vos camions apparaissent sur Google Maps avec leur direction et vitesse. Cliquez sur un marqueur pour voir les détails.',
+            target: '#admin-map, #admin-map-lg',
             color: '#e1f970',
           },
           {
             emoji: '📊',
             title: 'Stats live',
             text: 'Camions actifs, ouvriers en service, positions GPS — tout est mis à jour automatiquement.',
-            target: '#admin-stats',
+            target: '#admin-stats, #admin-stats-lg',
             color: '#60a5fa',
           },
           {
@@ -157,7 +157,7 @@ export default function AdminDashboard() {
             emoji: '🔗',
             title: 'Navigation',
             text: 'Camions → gérer la flotte et les QR codes. Ouvriers → gérer les comptes. Historique → revoir les trajets.',
-            target: '#admin-nav',
+            target: '#admin-nav, #admin-nav-lg',
             color: '#a78bfa',
           },
         ]}
@@ -194,7 +194,7 @@ export default function AdminDashboard() {
       {/* ── LEFT COLUMN DESKTOP ── */}
       <div className="hidden lg:block space-y-4">
 
-        <div className="bg-bg-card rounded-2xl p-5 border border-border-thin">
+        <div id="admin-stats-lg" className="bg-bg-card rounded-2xl p-5 border border-border-thin">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-[15px] font-medium text-white">Activité du jour</h3>
             <ArrowUpRight className="w-4 h-4 text-txt-muted" />
@@ -304,7 +304,7 @@ export default function AdminDashboard() {
       <div className="space-y-4">
 
         {/* CARTE DESKTOP */}
-        <div className="hidden lg:block rounded-3xl h-[520px] relative overflow-hidden border border-border-thin">
+        <div id="admin-map-lg" className="hidden lg:block rounded-3xl h-[520px] relative overflow-hidden border border-border-thin">
           <div className="h-full">
             <LiveMap ref={mapRef} positions={positions} onRefresh={loadData} focusTruckId={focusTruckId} />
           </div>
