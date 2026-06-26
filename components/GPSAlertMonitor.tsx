@@ -42,7 +42,7 @@ export default function GPSAlertMonitor({ positions }: Props) {
 
         // Réinitialiser quand le camion retrouve un signal
         if (age < SILENT_MS) {
-          ;[...alerted].filter(k => k.startsWith(pos.truck_id)).forEach(k => alerted.delete(k))
+          alerted.forEach(k => { if (k.startsWith(pos.truck_id)) alerted.delete(k) })
         }
       })
     }
