@@ -18,12 +18,14 @@ export interface LiveMapHandle {
 const LiveMap = forwardRef<LiveMapHandle, Props>(({
   positions, onRefresh, focusTruckId, followActive = false,
 }, ref) => {
-  const mapRef      = useRef<any>(null)
-  const markersRef  = useRef<Map<string, any>>(new Map())
-  const containerId = useRef(`live-map-${Math.random().toString(36).slice(2)}`)
-  const prevPosRef  = useRef<Map<string, [number, number]>>(new Map())
-  const headingRef  = useRef<Map<string, number>>(new Map())
-  const statusRef   = useRef<Map<string, boolean>>(new Map())
+  const mapRef         = useRef<any>(null)
+  const markersRef     = useRef<Map<string, any>>(new Map())
+  const containerId    = useRef(`live-map-${Math.random().toString(36).slice(2)}`)
+  const prevPosRef     = useRef<Map<string, [number, number]>>(new Map())
+  const headingRef     = useRef<Map<string, number>>(new Map())
+  const statusRef      = useRef<Map<string, boolean>>(new Map())
+  const userMovedRef   = useRef(false)   // true quand l'utilisateur pan/zoom manuellement
+  const moveTimerRef   = useRef<any>(null)
 
   useImperativeHandle(ref, () => ({
     flyTo: (lat, lng, zoom = 17) => {
@@ -43,17 +45,28 @@ const LiveMap = forwardRef<LiveMapHandle, Props>(({
       attributionControl: false,
     })
 
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    // CartoDB Voyager — URL standard {z}/{x}/{y}, pas de swap col/row
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 20,
+      subdomains: 'abcd',
     }).addTo(mapRef.current)
 
     L.control.attribution({ prefix: false, position: 'bottomright' })
-      .addAttribution('<span style="font-size:9px;opacity:.35">© Esri · OSM</span>')
+      .addAttribution('<span style="font-size:9px;opacity:.35">© CARTO · OSM</span>')
       .addTo(mapRef.current)
 
     L.control.zoom({ position: 'bottomleft' }).addTo(mapRef.current)
 
+    // Détecter les mouvements manuels de l'utilisateur (zoom/pan)
+    mapRef.current.on('mousedown touchstart', () => {
+      userMovedRef.current = true
+      clearTimeout(moveTimerRef.current)
+      // Reprendre le suivi automatique après 12s d'inactivité
+      moveTimerRef.current = setTimeout(() => { userMovedRef.current = false }, 12_000)
+    })
+
     return () => {
+      clearTimeout(moveTimerRef.current)
       if (mapRef.current) {
         mapRef.current.remove()
         mapRef.current = null
@@ -156,13 +169,14 @@ const LiveMap = forwardRef<LiveMapHandle, Props>(({
     })
 
     // ── Auto-centrage ────────────────────────────────────────────────────
-    if (followActive) {
+    if (followActive && !userMovedRef.current) {
+      // Mode ouvrier : suivre la position active SEULEMENT si l'utilisateur ne touche pas la carte
       const active = positions.find(p => p.is_active !== false)
       if (active) {
         mapRef.current.setView(
           [active.latitude, active.longitude],
-          Math.max(mapRef.current.getZoom(), 17),
-          { animate: true, duration: 0.8 }
+          Math.max(mapRef.current.getZoom(), 16),
+          { animate: true, duration: 0.6 }
         )
       }
     } else if (isFirstLoad && positions.length === 1) {

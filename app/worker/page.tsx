@@ -120,9 +120,8 @@ export default function WorkerPage() {
     watchIdRef.current = navigator.geolocation.watchPosition(
       async (pos) => {
         const { latitude, longitude, accuracy, speed, heading } = pos.coords
-        // Ignorer les coordonnées invalides (GPS sans signal = 0,0 ou précision > 300m)
+        // Ignorer uniquement les coordonnées GPS sans signal (0,0)
         if (Math.abs(latitude) < 0.001 && Math.abs(longitude) < 0.001) return
-        if (accuracy != null && accuracy > 300) return
 
         setGpsActive(true)
         setMyPosition({

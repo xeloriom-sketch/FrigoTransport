@@ -22,12 +22,13 @@ export default function TripMap({ points }: Props) {
       attributionControl: false,
     })
 
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 20,
+      subdomains: 'abcd',
     }).addTo(mapRef.current)
 
     L.control.attribution({ prefix: false, position: 'bottomright' })
-      .addAttribution('<span style="font-size:9px;opacity:.35">© Esri · OSM</span>')
+      .addAttribution('<span style="font-size:9px;opacity:.35">© CARTO · OSM</span>')
       .addTo(mapRef.current)
 
     L.control.zoom({ position: 'bottomleft' }).addTo(mapRef.current)
