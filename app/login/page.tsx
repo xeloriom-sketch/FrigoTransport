@@ -36,8 +36,8 @@ function LoginForm() {
   }
 
   return (
-    <div className="w-full h-screen flex items-center justify-center p-4 sm:p-6 bg-bg-main overflow-hidden" style={{ letterSpacing: '-0.01em' }}>
-      <div className="w-full max-w-[1100px] h-full max-h-[700px] grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div className="w-full min-h-screen flex items-center justify-center bg-bg-main pt-safe pb-safe pl-safe pr-safe" style={{ letterSpacing: '-0.01em', padding: 'max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left))' }}>
+      <div className="w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-2 gap-5 lg:h-[700px]">
 
         {/* Panneau gauche */}
         <div className="relative hidden lg:flex flex-col justify-between p-10 rounded-3xl bg-bg-card border border-border-thin overflow-hidden">

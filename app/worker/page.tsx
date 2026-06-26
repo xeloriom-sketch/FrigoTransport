@@ -431,7 +431,7 @@ export default function WorkerPage() {
 
   // ── PAS DE CAMION ────────────────────────────────────────────────────────────
   if (screen === 'no_truck') return (
-    <div className="min-h-screen bg-bg-main flex flex-col p-6" style={{ letterSpacing: '-0.01em', paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
+    <div className="min-h-screen bg-bg-main flex flex-col" style={{ letterSpacing: '-0.01em', padding: 'max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left))' }}>
       {/* Logo */}
       <div className="flex items-center gap-2 mb-auto pt-8">
         <Snowflake className="w-4 h-4 text-txt-muted" />
@@ -496,7 +496,7 @@ export default function WorkerPage() {
     <div className="min-h-screen bg-bg-main flex flex-col relative overflow-hidden" style={{ letterSpacing: '-0.01em' }}>
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent/4 rounded-full blur-[140px] pointer-events-none" />
 
-      <div className="relative flex-1 flex flex-col p-6 pt-12 max-w-sm mx-auto w-full">
+      <div className="relative flex-1 flex flex-col p-6 max-w-sm mx-auto w-full" style={{ paddingTop: 'max(48px, env(safe-area-inset-top))' }}>
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-1">
             <Snowflake className="w-3.5 h-3.5 text-txt-muted" />

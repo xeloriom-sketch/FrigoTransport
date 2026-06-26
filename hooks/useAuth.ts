@@ -18,7 +18,11 @@ export function useAuth(requiredRole?: 'admin' | 'worker') {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push('/login/?next=' + encodeURIComponent(window.location.pathname + window.location.search))
+        // Retirer le basePath (/FrigoTransport) du pathname avant de l'encoder
+        // car router.push() re-préfixe automatiquement avec le basePath
+        const rawPath = window.location.pathname
+        const cleanPath = rawPath.replace(/^\/FrigoTransport/, '') || '/'
+        router.push('/login/?next=' + encodeURIComponent(cleanPath + window.location.search))
         return
       }
 

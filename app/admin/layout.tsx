@@ -121,7 +121,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen bg-bg-main text-white" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.01em' }}>
 
       {/* ── Header desktop ── */}
-      <header className="hidden lg:flex items-center justify-between px-6 py-3 border-b border-border-thin">
+      <header className="hidden lg:flex items-center justify-between px-6 border-b border-border-thin header-safe">
         <div className="flex items-center gap-10">
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 bg-white rounded-md flex items-center justify-center">
@@ -161,7 +161,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
 
       {/* ── Header mobile ── */}
-      <header className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-border-thin">
+      <header className="lg:hidden flex items-center justify-between px-4 border-b border-border-thin header-safe-sm">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-white rounded-lg flex items-center justify-center">
             <Snowflake className="w-3.5 h-3.5 text-black" />
@@ -180,7 +180,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
 
       {/* ── Page content ── */}
-      <main className="p-4 lg:p-5 pb-24 lg:pb-5">
+      <main className="p-4 lg:p-5 pb-24 lg:pb-5 pl-safe pr-safe">
         {children}
       </main>
 
