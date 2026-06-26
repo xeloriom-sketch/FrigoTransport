@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react'
 import { RefreshCw, X, Sparkles } from 'lucide-react'
 
 // ⬆️ INCRÉMENTER ICI à chaque déploiement + mettre à jour CHANGELOG
-const APP_VERSION = '1.9.0'
+const APP_VERSION = '2.0.0'
 const CHANGELOG = [
+  'Tutoriel interactif — guide pas à pas pour admin et ouvrier',
   'Alerte GPS — notification si aucun signal depuis 30 min',
-  'Notification ouvrier — rappel d\'ouvrir l\'app si GPS inactif',
-  'Google Maps intégré — rues, restaurants, POIs en temps réel',
-  'Marqueur camion corrigé — s\'affiche au bon endroit sur la carte',
-  'Adresse dans la popup au clic sur un camion',
-  'Écran anti-veille sur toute l\'application',
+  'Chargement plus rapide — connexion optimisée à Google Maps',
+  'Écran noir corrigé — rechargement automatique si crash',
+  'Barre de progression — indicateur de chargement en haut',
+  'Google Maps — carte réelle avec rues et points d\'intérêt',
 ]
 
 export default function PWAUpdater() {

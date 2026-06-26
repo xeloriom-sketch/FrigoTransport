@@ -8,6 +8,7 @@ import type { TruckPosition } from '@/types'
 import type { LiveMapHandle } from '@/components/LiveMap'
 import { Truck, Users, Activity, MapPin, ArrowUpRight, CheckCircle } from 'lucide-react'
 import GPSAlertMonitor from '@/components/GPSAlertMonitor'
+import Tutorial from '@/components/Tutorial'
 
 const LiveMap = dynamic(() => import('@/components/LiveMap'), { ssr: false })
 
@@ -122,15 +123,55 @@ export default function AdminDashboard() {
     <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[300px_1fr] lg:gap-4 lg:items-start">
       <GPSAlertMonitor positions={positions} />
 
+      <Tutorial
+        storageKey="admin-tutorial-v1"
+        steps={[
+          {
+            emoji: '🗺️',
+            title: 'Carte en temps réel',
+            text: 'Vos camions apparaissent sur Google Maps avec leur direction et vitesse. Appuyez sur un marqueur pour voir les détails.',
+            target: '#admin-map',
+            color: '#e1f970',
+          },
+          {
+            emoji: '📊',
+            title: 'Stats live',
+            text: 'Camions actifs, ouvriers en service, positions GPS — tout est mis à jour automatiquement.',
+            target: '#admin-stats',
+            color: '#60a5fa',
+          },
+          {
+            emoji: '🚛',
+            title: 'Tableau des affectations',
+            text: 'Voyez qui conduit quel camion et depuis quand. Filtrez Actifs / Terminés.',
+            target: '#admin-assignments',
+            color: '#34d399',
+          },
+          {
+            emoji: '⚠️',
+            title: 'Alertes GPS automatiques',
+            text: 'Si un camion n\'envoie plus de position depuis 30 min, vous recevez une notification navigateur.',
+            color: '#f97316',
+          },
+          {
+            emoji: '🔗',
+            title: 'Navigation',
+            text: 'Camions → gérer la flotte et les QR codes. Ouvriers → gérer les comptes. Historique → revoir les trajets.',
+            target: '#admin-nav',
+            color: '#a78bfa',
+          },
+        ]}
+      />
+
       {/* ── CARTE (mobile: en premier, pleine largeur) ── */}
-      <div className="lg:hidden rounded-2xl relative overflow-hidden border border-border-thin" style={{ height: 260 }}>
+      <div id="admin-map" className="lg:hidden rounded-2xl relative overflow-hidden border border-border-thin" style={{ height: 260 }}>
         <div className="h-full">
           <LiveMap ref={mapRef} positions={positions} onRefresh={loadData} focusTruckId={focusTruckId} />
         </div>
       </div>
 
       {/* ── STATS MOBILES (2x2 grid) ── */}
-      <div className="lg:hidden grid grid-cols-2 gap-2.5">
+      <div id="admin-stats" className="lg:hidden grid grid-cols-2 gap-2.5">
         {[
           { icon: Truck, label: 'Camions', value: totalTrucks },
           { icon: Users, label: 'Ouvriers', value: totalWorkers },
@@ -270,7 +311,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* AFFECTATIONS */}
-        <div className="bg-bg-card rounded-2xl p-4 lg:p-5 border border-border-thin">
+        <div id="admin-assignments" className="bg-bg-card rounded-2xl p-4 lg:p-5 border border-border-thin">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 lg:mb-6">
             <h3 className="text-[15px] font-medium text-white">Affectations</h3>
             <div className="bg-neutral-900/60 p-0.5 rounded-xl border border-border-thin flex gap-0.5 text-xs">

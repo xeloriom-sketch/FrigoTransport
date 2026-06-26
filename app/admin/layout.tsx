@@ -205,7 +205,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </main>
 
       {/* ── Bottom nav mobile ── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-bg-card/95 backdrop-blur-md border-t border-border-thin"
+      <nav id="admin-nav" className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-bg-card/95 backdrop-blur-md border-t border-border-thin"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="flex">
           {nav.map(({ href, label, icon: Icon, exact }) => {

@@ -59,6 +59,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* Empêche la détection automatique de numéros de téléphone */}
         <meta name="format-detection" content="telephone=no" />
+
+        {/* Préconnexion aux services externes pour démarrage rapide */}
+        <link rel="preconnect" href="https://maps.googleapis.com" />
+        <link rel="preconnect" href="https://maps.gstatic.com" crossOrigin="" />
+        <link rel="preconnect" href="https://pomscilzzjnlevrwyvap.supabase.co" />
+        <link rel="dns-prefetch" href="https://unpkg.com" />
       </head>
       <body className={inter.className}>
         <TopLoader />

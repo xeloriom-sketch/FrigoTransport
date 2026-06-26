@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Truck, Clock, MapPin, CheckCircle, LogOut, Snowflake, Camera, QrCode, X, AlertCircle, Navigation } from 'lucide-react'
 import InstallPWA from '@/components/InstallPWA'
+import Tutorial from '@/components/Tutorial'
 import WorkerNavigation from '@/components/WorkerNavigation'
 import type { TruckPosition } from '@/types'
 
@@ -544,6 +545,7 @@ export default function WorkerPage() {
 
         {/* BOUTON PRINCIPAL */}
         <button
+          id="worker-scan-btn"
           onClick={openScanner}
           className="w-full max-w-xs flex items-center justify-center gap-3 py-4 bg-accent text-black font-bold text-base rounded-2xl hover:bg-[#d2eb57] active:scale-[0.98] transition shadow-lg mb-3"
           style={{ boxShadow: '0 0 30px rgba(225,249,112,0.2)' }}
@@ -561,6 +563,42 @@ export default function WorkerPage() {
         <LogOut className="w-3.5 h-3.5" /> Se déconnecter
       </button>
 
+      <Tutorial
+        storageKey="worker-tutorial-v1"
+        steps={[
+          {
+            emoji: '👋',
+            title: 'Bienvenue sur FrigoTransport',
+            text: 'Cette app permet à ton patron de te suivre en temps réel pendant ton service. Voici comment démarrer.',
+            color: '#e1f970',
+          },
+          {
+            emoji: '📷',
+            title: 'Scanner le QR code',
+            text: 'Monte dans ton camion, repère le QR code sur le tableau de bord, puis appuie sur le bouton jaune ci-dessous.',
+            target: '#worker-scan-btn',
+            color: '#60a5fa',
+          },
+          {
+            emoji: '📍',
+            title: 'Garde l\'écran allumé',
+            text: 'L\'app envoie ta position toutes les 5 secondes. Si l\'écran se verrouille, le GPS peut s\'arrêter.',
+            color: '#f97316',
+          },
+          {
+            emoji: '🔔',
+            title: 'Active les notifications',
+            text: 'Si tu n\'as pas envoyé de position depuis 30 min, tu recevras un rappel pour rouvrir l\'app.',
+            color: '#34d399',
+          },
+          {
+            emoji: '🏁',
+            title: 'Fin de service',
+            text: 'Quand tu ranges le camion, appuie sur "Camion rangé" pour désactiver le GPS et clôturer ton service.',
+            color: '#a78bfa',
+          },
+        ]}
+      />
       <InstallPWA />
     </div>
   )
