@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react'
 import { RefreshCw, X, Sparkles } from 'lucide-react'
 
 // ⬆️ INCRÉMENTER ICI à chaque déploiement + mettre à jour CHANGELOG
-const APP_VERSION = '1.7.0'
+const APP_VERSION = '1.8.0'
 const CHANGELOG = [
-  'Carte corrigée — tuiles CartoDB Voyager (plus de décalage géographique)',
-  'Flèche camion tourne dans la direction de déplacement (style Uber)',
-  'Suivi GPS : pause automatique quand tu touches la carte',
+  'Google Maps intégré — rues, restaurants, POIs en temps réel',
+  'Marqueur camion corrigé — s\'affiche au bon endroit sur la carte',
+  'Adresse dans la popup — affichée automatiquement au clic',
+  'Écran anti-veille — l\'app reste allumée comme YouTube',
   'Historique des trajets avec polyline colorée par vitesse',
-  'Animations d\'apparition sur toute l\'interface',
-  'Popup mise à jour automatique à chaque déploiement',
+  'Flèche camion tourne dans la direction de déplacement',
 ]
 
 export default function PWAUpdater() {
