@@ -24,9 +24,14 @@ export default function TripMap({ points }: Props) {
 
     L.control.zoom({ position: 'bottomleft' }).addTo(mapRef.current)
 
-    const loadScript = (src: string) => new Promise<void>((res, rej) => {
-      if (document.querySelector(`script[src*="maps.googleapis.com"]`) && src.includes('googleapis')) { res(); return }
-      if (document.querySelector(`script[src*="GoogleMutant"]`) && src.includes('GoogleMutant')) { res(); return }
+    const loadScript = (src: string, readyCheck: () => boolean) => new Promise<void>((res, rej) => {
+      if (readyCheck()) { res(); return }
+      const existing = document.querySelector(`script[src*="${src.split('?')[0].split('/').pop()}"]`) as HTMLScriptElement | null
+      if (existing) {
+        existing.addEventListener('load', () => res())
+        existing.addEventListener('error', () => rej())
+        return
+      }
       const s = document.createElement('script')
       s.src = src; s.onload = () => res(); s.onerror = () => rej()
       document.head.appendChild(s)
@@ -35,8 +40,14 @@ export default function TripMap({ points }: Props) {
     (async () => {
       try {
         const key = 'AIzaSyBplAYmn_oV0dMR4ZcZr0ZeTXFvMxZmVrU'
-        await loadScript(`https://maps.googleapis.com/maps/api/js?key=${key}&loading=async`)
-        await loadScript('https://unpkg.com/leaflet.gridlayer.googlemutant@0.13.5/dist/Leaflet.GoogleMutant.js')
+        await loadScript(
+          `https://maps.googleapis.com/maps/api/js?key=${key}`,
+          () => !!(window as any).google?.maps?.Map
+        )
+        await loadScript(
+          'https://unpkg.com/leaflet.gridlayer.googlemutant@0.13.5/dist/Leaflet.GoogleMutant.js',
+          () => !!(L as any).gridLayer?.googleMutant
+        )
         if (!mapRef.current) return
         ;(L as any).gridLayer.googleMutant({ type: 'roadmap', maxZoom: 22 }).addTo(mapRef.current)
       } catch {

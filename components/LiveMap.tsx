@@ -47,13 +47,20 @@ const LiveMap = forwardRef<LiveMapHandle, Props>(({
 
     L.control.zoom({ position: 'bottomleft' }).addTo(mapRef.current)
 
-    // Charger Google Maps API puis le plugin Mutant
-    const loadScript = (src: string) => new Promise<void>((res, rej) => {
-      if (document.querySelector(`script[src*="maps.googleapis.com"]`) && src.includes('googleapis')) { res(); return }
-      if (document.querySelector(`script[src*="GoogleMutant"]`) && src.includes('GoogleMutant')) { res(); return }
+    // Charger Google Maps API puis GoogleMutant de façon robuste
+    const loadScript = (src: string, readyCheck: () => boolean) => new Promise<void>((res, rej) => {
+      // Déjà chargé et disponible
+      if (readyCheck()) { res(); return }
+      // Script présent dans le DOM mais encore en cours de chargement
+      const existing = document.querySelector(`script[src*="${src.split('?')[0].split('/').pop()}"]`) as HTMLScriptElement | null
+      if (existing) {
+        existing.addEventListener('load',  () => res())
+        existing.addEventListener('error', () => rej(new Error('script error')))
+        return
+      }
       const s = document.createElement('script')
       s.src = src
-      s.onload = () => res()
+      s.onload  = () => res()
       s.onerror = () => rej(new Error(`Failed: ${src}`))
       document.head.appendChild(s)
     });
@@ -61,15 +68,19 @@ const LiveMap = forwardRef<LiveMapHandle, Props>(({
     (async () => {
       try {
         const key = 'AIzaSyBplAYmn_oV0dMR4ZcZr0ZeTXFvMxZmVrU'
-        await loadScript(`https://maps.googleapis.com/maps/api/js?key=${key}&loading=async`)
-        await loadScript('https://unpkg.com/leaflet.gridlayer.googlemutant@0.13.5/dist/Leaflet.GoogleMutant.js')
+        // Sans loading=async — GoogleMutant a besoin que l'API soit dispo synchronement après onload
+        await loadScript(
+          `https://maps.googleapis.com/maps/api/js?key=${key}`,
+          () => !!(window as any).google?.maps?.Map
+        )
+        await loadScript(
+          'https://unpkg.com/leaflet.gridlayer.googlemutant@0.13.5/dist/Leaflet.GoogleMutant.js',
+          () => !!(L as any).gridLayer?.googleMutant
+        )
         if (!mapRef.current) return
-        ;(L as any).gridLayer.googleMutant({
-          type: 'roadmap',   // 'satellite' | 'terrain' | 'hybrid' aussi disponibles
-          maxZoom: 22,
-        }).addTo(mapRef.current)
+        ;(L as any).gridLayer.googleMutant({ type: 'roadmap', maxZoom: 22 }).addTo(mapRef.current)
       } catch {
-        // Fallback CartoDB si Google Maps n'est pas accessible
+        // Fallback CartoDB si Google Maps inaccessible
         if (!mapRef.current) return
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
           maxZoom: 20, subdomains: 'abcd',
