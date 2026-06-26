@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react'
 import { RefreshCw, X, Sparkles } from 'lucide-react'
 
 // ⬆️ INCRÉMENTER ICI à chaque déploiement + mettre à jour CHANGELOG
-const APP_VERSION = '1.6.0'
+const APP_VERSION = '1.7.0'
 const CHANGELOG = [
-  'Flèche camion tourne vers la direction de déplacement (style Uber)',
-  'Animations d\'apparition fluides sur toute l\'interface',
-  'Carte Esri World Street Map — rues, restaurants, bâtiments',
-  'Correction GPS : plus de marqueur dans la mer (filtre coordonnées 0,0)',
-  'Padding corrigé sur les pages Camions et Ouvriers',
-  'Popup carte redessinée avec animation',
+  'Carte corrigée — tuiles CartoDB Voyager (plus de décalage géographique)',
+  'Flèche camion tourne dans la direction de déplacement (style Uber)',
+  'Suivi GPS : pause automatique quand tu touches la carte',
+  'Historique des trajets avec polyline colorée par vitesse',
+  'Animations d\'apparition sur toute l\'interface',
+  'Popup mise à jour automatique à chaque déploiement',
 ]
 
 export default function PWAUpdater() {
@@ -22,23 +22,25 @@ export default function PWAUpdater() {
   useEffect(() => {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return
 
-    // Vérifier si c'est une nouvelle version
+    // Afficher le changelog si nouvelle version détectée
     const lastVersion = localStorage.getItem('app-version')
-    if (lastVersion && lastVersion !== APP_VERSION) {
-      setShowChangelog(true)
+    if (lastVersion !== APP_VERSION) {
+      // Délai pour laisser l'app se charger
+      setTimeout(() => setShowChangelog(true), 1500)
+      localStorage.setItem('app-version', APP_VERSION)
     }
-    localStorage.setItem('app-version', APP_VERSION)
 
     // Enregistrer le service worker
     navigator.serviceWorker.register('/FrigoTransport/sw.js', { scope: '/FrigoTransport/' })
       .then(registration => {
         setReg(registration)
 
-        // Détecter une mise à jour en attente
+        // Mise à jour déjà en attente (rechargement précédent)
         if (registration.waiting) {
           setUpdateReady(true)
         }
 
+        // Nouvelle mise à jour détectée pendant la session
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing
           if (!newWorker) return
@@ -48,10 +50,13 @@ export default function PWAUpdater() {
             }
           })
         })
+
+        // Forcer la vérification d'une mise à jour à chaque chargement
+        registration.update().catch(() => {})
       })
       .catch(() => {})
 
-    // Recharger quand le nouveau SW prend le contrôle
+    // Recharger automatiquement quand le nouveau SW prend le contrôle
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       window.location.reload()
     })

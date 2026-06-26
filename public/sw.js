@@ -2,7 +2,7 @@
 // FrigoTransport Service Worker — GPS Background + Cache
 // ============================================================
 
-const CACHE = 'frigotransport-v2'
+const CACHE = 'frigotransport-v3'
 const GPS_QUEUE_KEY = 'gps-queue'
 
 // ── Installation ─────────────────────────────────────────────
