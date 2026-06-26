@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Truck, Clock, MapPin, CheckCircle, LogOut, Snowflake, Camera, QrCode, X, AlertCircle } from 'lucide-react'
+import InstallPWA from '@/components/InstallPWA'
 
 type Screen = 'loading' | 'active' | 'done' | 'no_truck' | 'scanning'
 
@@ -421,6 +422,8 @@ export default function WorkerPage() {
       >
         <LogOut className="w-3.5 h-3.5" /> Se déconnecter
       </button>
+
+      <InstallPWA />
     </div>
   )
 

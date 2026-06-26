@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Loader2, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import InstallPWA from '@/components/InstallPWA'
 
 function LoginForm() {
   const router = useRouter()
@@ -142,12 +143,15 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-bg-main flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-txt-muted" />
-      </div>
-    }>
-      <LoginForm />
-    </Suspense>
+    <>
+      <Suspense fallback={
+        <div className="min-h-screen bg-bg-main flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-txt-muted" />
+        </div>
+      }>
+        <LoginForm />
+      </Suspense>
+      <InstallPWA />
+    </>
   )
 }
