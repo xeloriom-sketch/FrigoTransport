@@ -1,24 +1,38 @@
 {
   "name": "FrigoTransport",
   "short_name": "FrigoTransport",
-  "description": "Pointage présence et suivi camions",
-  "start_url": "/",
+  "description": "Suivi GPS de flotte frigorifique",
+  "start_url": "/FrigoTransport/",
+  "scope": "/FrigoTransport/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0ea5e9",
-  "orientation": "portrait",
+  "background_color": "#020817",
+  "theme_color": "#020817",
+  "orientation": "portrait-primary",
+  "lang": "fr",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/FrigoTransport/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/FrigoTransport/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/FrigoTransport/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/FrigoTransport/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
