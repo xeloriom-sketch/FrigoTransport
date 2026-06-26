@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import PWAUpdater from '@/components/PWAUpdater'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -57,7 +58,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Empêche la détection automatique de numéros de téléphone */}
         <meta name="format-detection" content="telephone=no" />
       </head>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        {children}
+        <PWAUpdater />
+      </body>
     </html>
   )
 }

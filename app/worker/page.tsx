@@ -112,48 +112,86 @@ export default function WorkerPage() {
     setScanStatus('idle')
     setScreen('scanning')
 
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setScanError("Caméra non disponible sur ce navigateur. Utilisez Safari sur iPhone.")
+      return
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
       })
       streamRef.current = stream
       if (videoRef.current) {
         videoRef.current.srcObject = stream
-        await videoRef.current.play()
-        setScanStatus('scanning')
-        startDetection()
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play().then(() => {
+            setScanStatus('scanning')
+            startDetection()
+          })
+        }
       }
     } catch (err: any) {
       const msg = err.name === 'NotAllowedError'
-        ? "Accès caméra refusé. Autorisez la caméra dans les réglages du navigateur."
-        : err.name === 'NotFoundError'
+        ? "Caméra refusée — allez dans Réglages > Safari > Caméra et autorisez."
+        : err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError'
         ? "Aucune caméra trouvée sur cet appareil."
-        : "Impossible d'ouvrir la caméra."
+        : err.name === 'NotReadableError'
+        ? "Caméra utilisée par une autre app, fermez-la puis réessayez."
+        : `Erreur caméra : ${err.message || err.name}`
       setScanError(msg)
     }
   }
 
   function startDetection() {
-    const hasBarcodeDetector = 'BarcodeDetector' in window
+    const canvasEl = document.createElement('canvas')
+    const ctx = canvasEl.getContext('2d', { willReadFrequently: true })
+    if (!ctx) return
 
-    if (hasBarcodeDetector) {
-      const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] })
-      const loop = async () => {
-        if (!videoRef.current || !streamRef.current) return
-        try {
-          const codes = await detector.detect(videoRef.current)
+    let detected = false
+
+    const loop = async () => {
+      if (detected || !videoRef.current || !streamRef.current) return
+      const video = videoRef.current
+
+      // Attendre que la vidéo ait des données
+      if (video.readyState < 2 || video.videoWidth === 0) {
+        rafRef.current = requestAnimationFrame(loop)
+        return
+      }
+
+      canvasEl.width  = video.videoWidth
+      canvasEl.height = video.videoHeight
+      ctx.drawImage(video, 0, 0, canvasEl.width, canvasEl.height)
+
+      try {
+        // 1. BarcodeDetector natif (Chrome Android, iOS 17+) — le plus rapide
+        if ('BarcodeDetector' in window) {
+          const codes = await (window as any).BarcodeDetector.detect(video)
           if (codes.length > 0) {
+            detected = true
             await handleQRDetected(codes[0].rawValue)
             return
           }
-        } catch {}
-        rafRef.current = requestAnimationFrame(loop)
-      }
+        }
+
+        // 2. jsQR — fallback universel (tous iOS/Android)
+        const imageData = ctx.getImageData(0, 0, canvasEl.width, canvasEl.height)
+        const jsQR = (await import('jsqr')).default
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: 'dontInvert',
+        })
+        if (code?.data) {
+          detected = true
+          await handleQRDetected(code.data)
+          return
+        }
+      } catch {}
+
       rafRef.current = requestAnimationFrame(loop)
-    } else {
-      // Fallback: lire depuis un input file (photo)
-      setScanError('Scanner automatique non disponible. Prenez une photo du QR code.')
     }
+
+    rafRef.current = requestAnimationFrame(loop)
   }
 
   async function handleQRDetected(rawValue: string) {
@@ -161,21 +199,21 @@ export default function WorkerPage() {
     stopCamera()
 
     try {
-      // Le QR contient une URL comme https://.../scan/?t=TOKEN
       let token: string | null = null
-      try {
-        const url = new URL(rawValue)
-        token = url.searchParams.get('t')
-      } catch {
-        // Peut-être juste le token directement
-        token = rawValue.length === 36 ? rawValue : null
+      // Format 1 : URL complète https://.../scan/?t=UUID
+      try { token = new URL(rawValue).searchParams.get('t') } catch {}
+      // Format 2 : UUID brut
+      if (!token && /^[0-9a-f-]{36}$/i.test(rawValue.trim())) token = rawValue.trim()
+
+      if (!token) {
+        setScanError('QR code non reconnu — ce n\'est pas un QR FrigoTransport.')
+        setScanStatus('idle')
+        return
       }
 
-      if (!token) { setScanError('QR code non reconnu. Réessayez.'); setScanStatus('idle'); return }
-
       await doCheckIn(token)
-    } catch (err) {
-      setScanError('Erreur lors du scan. Réessayez.')
+    } catch {
+      setScanError('Erreur réseau. Vérifiez votre connexion et réessayez.')
       setScanStatus('idle')
     }
   }
@@ -250,93 +288,119 @@ export default function WorkerPage() {
 
   // ── SCANNER QR ───────────────────────────────────────────────────────────────
   if (screen === 'scanning') return (
-    <div className="min-h-screen bg-black flex flex-col" style={{ letterSpacing: '-0.01em' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-12 pb-4 z-10">
+    <div className="fixed inset-0 bg-black flex flex-col" style={{ letterSpacing: '-0.01em' }}>
+
+      {/* Header fixe */}
+      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4"
+        style={{ paddingTop: 'max(48px, env(safe-area-inset-top))' }}>
         <button
           onClick={() => { stopCamera(); setScreen('no_truck'); setScanError('') }}
-          className="w-10 h-10 bg-white/10 backdrop-blur rounded-full flex items-center justify-center"
+          className="w-11 h-11 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20"
         >
           <X className="w-5 h-5 text-white" />
         </button>
-        <p className="text-white text-sm font-medium">Scanner le QR code</p>
-        <div className="w-10" />
+        <div className="bg-black/50 backdrop-blur-md border border-white/20 rounded-full px-4 py-2">
+          <p className="text-white text-sm font-medium">Scanner le camion</p>
+        </div>
+        <div className="w-11" />
       </div>
 
-      {/* Caméra */}
-      <div className="flex-1 relative overflow-hidden">
-        <video
-          ref={videoRef}
-          className="w-full h-full object-cover"
-          playsInline
-          muted
-          autoPlay
-        />
+      {/* Vidéo plein écran */}
+      <video
+        ref={videoRef}
+        className="absolute inset-0 w-full h-full object-cover"
+        playsInline muted autoPlay
+      />
 
-        {/* Overlay scan */}
-        {scanStatus === 'scanning' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            {/* Cadre de scan */}
-            <div className="relative w-64 h-64">
-              {/* Coins du cadre */}
-              {[['top-0 left-0','rounded-tl-2xl border-t-4 border-l-4'],
-                ['top-0 right-0','rounded-tr-2xl border-t-4 border-r-4'],
-                ['bottom-0 left-0','rounded-bl-2xl border-b-4 border-l-4'],
-                ['bottom-0 right-0','rounded-br-2xl border-b-4 border-r-4']
-              ].map(([pos, cls]) => (
-                <div key={pos} className={`absolute w-8 h-8 border-accent ${pos} ${cls}`} />
-              ))}
-              {/* Ligne de scan animée */}
-              <div className="absolute inset-x-2 top-0" style={{ animation: 'scanLine 2s ease-in-out infinite' }}>
-                <div className="h-0.5 bg-accent shadow-lg" style={{ boxShadow: '0 0 8px #e1f970' }} />
-              </div>
-            </div>
-            <p className="text-white text-sm mt-8 font-medium">Pointez vers le QR code du camion</p>
-            <p className="text-white/50 text-xs mt-1">Détection automatique</p>
-          </div>
-        )}
+      {/* Overlay sombre sur les bords avec découpe centrale */}
+      <div className="absolute inset-0 z-10 pointer-events-none" style={{
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.7) 100%)'
+      }} />
 
-        {/* Succès */}
-        {scanStatus === 'found' && (
-          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-accent rounded-full flex items-center justify-center mx-auto mb-4" style={{ boxShadow: '0 0 40px rgba(225,249,112,0.5)' }}>
-                <CheckCircle className="w-10 h-10 text-black" />
-              </div>
-              <p className="text-white text-lg font-bold">QR détecté !</p>
-              <p className="text-white/60 text-sm">Connexion en cours...</p>
+      {/* Zone de scan centrale */}
+      {scanStatus === 'scanning' && !scanError && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none">
+          <div className="relative w-72 h-72">
+            {/* Ombre autour du cadre */}
+            <div className="absolute inset-0 rounded-3xl" style={{
+              boxShadow: '0 0 0 9999px rgba(0,0,0,0.45)'
+            }} />
+            {/* Coins accent */}
+            {[
+              'top-0 left-0 rounded-tl-3xl border-t-[3px] border-l-[3px]',
+              'top-0 right-0 rounded-tr-3xl border-t-[3px] border-r-[3px]',
+              'bottom-0 left-0 rounded-bl-3xl border-b-[3px] border-l-[3px]',
+              'bottom-0 right-0 rounded-br-3xl border-b-[3px] border-r-[3px]',
+            ].map(cls => (
+              <div key={cls} className={`absolute w-10 h-10 border-accent ${cls}`} />
+            ))}
+            {/* Ligne scan */}
+            <div className="absolute inset-x-3" style={{ animation: 'scanLine 2s ease-in-out infinite', top: 0 }}>
+              <div className="h-0.5 bg-accent rounded-full" style={{ boxShadow: '0 0 12px #e1f970, 0 0 4px #e1f970' }} />
             </div>
           </div>
-        )}
+          <p className="text-white text-sm font-semibold mt-8 drop-shadow-lg">Centrez le QR code dans le cadre</p>
+          <p className="text-white/60 text-xs mt-1">Détection automatique</p>
+        </div>
+      )}
 
-        {/* Assombrissement des bords */}
-        <div className="absolute inset-0 pointer-events-none" style={{
-          background: 'radial-gradient(ellipse 200px 200px at center, transparent 50%, rgba(0,0,0,0.75) 100%)'
-        }} />
-      </div>
-
-      {/* Erreur + fallback */}
-      <div className="p-6 space-y-3" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
-        {scanError && (
-          <div className="bg-red-500/20 border border-red-500/30 rounded-2xl p-4 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
-            <p className="text-red-300 text-sm">{scanError}</p>
+      {/* Succès */}
+      {scanStatus === 'found' && (
+        <div className="absolute inset-0 z-20 bg-black/70 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-24 h-24 bg-accent rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ boxShadow: '0 0 60px rgba(225,249,112,0.6)' }}>
+              <CheckCircle className="w-12 h-12 text-black" />
+            </div>
+            <p className="text-white text-xl font-bold">QR détecté !</p>
+            <p className="text-white/60 text-sm mt-1">Connexion au camion...</p>
           </div>
-        )}
-        {/* Fallback: retenter */}
-        <button
-          onClick={() => { setScanError(''); setScanStatus('idle'); stopCamera(); setTimeout(openScanner, 300) }}
-          className="w-full py-3.5 bg-white/10 border border-white/20 text-white text-sm font-medium rounded-2xl"
-        >
-          Réessayer
-        </button>
-      </div>
+        </div>
+      )}
+
+      {/* ERREUR — bien visible au centre */}
+      {scanError && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6">
+          <div className="w-full max-w-xs bg-bg-card border border-red-500/30 rounded-3xl p-6 text-center shadow-2xl">
+            <div className="w-14 h-14 bg-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-7 h-7 text-red-400" />
+            </div>
+            <p className="text-white font-semibold text-sm mb-2">Problème de scanner</p>
+            <p className="text-red-300 text-sm leading-relaxed mb-5">{scanError}</p>
+            <button
+              onClick={() => { setScanError(''); setScanStatus('idle'); stopCamera(); setTimeout(openScanner, 400) }}
+              className="w-full py-3 bg-accent text-black text-sm font-bold rounded-2xl mb-2"
+            >
+              Réessayer
+            </button>
+            <button
+              onClick={() => { stopCamera(); setScreen('no_truck'); setScanError('') }}
+              className="w-full py-2.5 text-txt-muted text-sm"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bouton bas — Réessayer discret quand pas d'erreur */}
+      {!scanError && scanStatus === 'scanning' && (
+        <div className="absolute bottom-0 left-0 right-0 z-20 p-5"
+          style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+          <button
+            onClick={() => { stopCamera(); setScreen('no_truck') }}
+            className="w-full py-3 bg-black/40 backdrop-blur-md border border-white/20 text-white/70 text-sm rounded-2xl"
+          >
+            Annuler
+          </button>
+        </div>
+      )}
 
       <style>{`
         @keyframes scanLine {
-          0%   { top: 8px;   opacity: 1; }
-          50%  { top: calc(100% - 8px); opacity: 1; }
-          100% { top: 8px;   opacity: 1; }
+          0%   { top: 4px;              }
+          50%  { top: calc(100% - 4px); }
+          100% { top: 4px;              }
         }
       `}</style>
     </div>
