@@ -121,7 +121,7 @@ export default function AdminDashboard() {
       {/* ── CARTE (mobile: en premier, pleine largeur) ── */}
       <div className="lg:hidden rounded-2xl relative overflow-hidden border border-border-thin" style={{ height: 260 }}>
         <div className="h-full">
-          <LiveMap ref={mapRef} positions={positions} onRefresh={loadData} focusTruckId={focusTruckId} darkMode={true} />
+          <LiveMap ref={mapRef} positions={positions} onRefresh={loadData} focusTruckId={focusTruckId} />
         </div>
       </div>
 
@@ -259,7 +259,7 @@ export default function AdminDashboard() {
         {/* CARTE DESKTOP */}
         <div className="hidden lg:block rounded-3xl h-[520px] relative overflow-hidden border border-border-thin">
           <div className="h-full">
-            <LiveMap ref={mapRef} positions={positions} onRefresh={loadData} focusTruckId={focusTruckId} darkMode={true} />
+            <LiveMap ref={mapRef} positions={positions} onRefresh={loadData} focusTruckId={focusTruckId} />
           </div>
         </div>
 

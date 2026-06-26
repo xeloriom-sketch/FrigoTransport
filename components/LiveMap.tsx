@@ -40,20 +40,14 @@ const LiveMap = forwardRef<LiveMapHandle, Props>(({
       attributionControl: false,
     })
 
-    if (darkMode) {
-      // Sombre pour l'admin (CartoDB Dark)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19, subdomains: 'abcd',
-      }).addTo(mapRef.current)
-    } else {
-      // CLAIR et DÉTAILLÉ pour l'ouvrier — style proche Google Maps
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 20, subdomains: 'abcd',
-      }).addTo(mapRef.current)
-    }
+    // Tuiles Esri World Street Map — rues, restaurants, bâtiments, niveau Google Maps
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 20,
+      attribution: '',
+    }).addTo(mapRef.current)
 
     L.control.attribution({ prefix: false, position: 'bottomright' })
-      .addAttribution('<span style="font-size:9px;opacity:.5">© CARTO · OSM</span>')
+      .addAttribution('<span style="font-size:9px;opacity:.4">© Esri · OSM</span>')
       .addTo(mapRef.current)
 
     L.control.zoom({ position: 'bottomleft' }).addTo(mapRef.current)
@@ -89,14 +83,14 @@ const LiveMap = forwardRef<LiveMapHandle, Props>(({
 
       const iconHtml = isActive
         ? `<div style="position:relative;width:44px;height:44px">
-            <div style="position:absolute;inset:0;background:rgba(34,197,94,0.2);border-radius:50%;animation:ping 2s ease-out infinite"></div>
-            <div style="position:absolute;inset:6px;background:${darkMode ? '#e1f970' : '#16a34a'};border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.3);border:2.5px solid white">
-              ${truckSvg(darkMode ? '#000' : '#fff')}
+            <div style="position:absolute;inset:0;background:rgba(22,163,74,0.25);border-radius:50%;animation:ping 2s ease-out infinite"></div>
+            <div style="position:absolute;inset:6px;background:#16a34a;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 14px rgba(22,163,74,0.5);border:2.5px solid white">
+              ${truckSvg('#fff')}
             </div>
            </div>`
         : `<div style="position:relative;width:36px;height:36px">
-            <div style="position:absolute;inset:4px;background:#6b7280;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid ${darkMode ? '#555' : '#fff'};box-shadow:0 2px 8px rgba(0,0,0,0.25)">
-              ${truckSvg('#ccc')}
+            <div style="position:absolute;inset:4px;background:#6b7280;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
+              ${truckSvg('#fff')}
             </div>
            </div>`
 
@@ -178,14 +172,14 @@ const LiveMap = forwardRef<LiveMapHandle, Props>(({
         .leaflet-top,.leaflet-bottom { z-index:800 }
       `}</style>
 
-      {/* Overlay admin (sombre) */}
-      {darkMode && (
-        <div style={{ position:'absolute', top:14, left:14, zIndex:1000, display:'flex', gap:8, pointerEvents:'none' }}>
-          <div style={{ background:'rgba(24,24,27,.92)', border:'1px solid #27272a', backdropFilter:'blur(8px)', color:'#e1f970', padding:'6px 12px', borderRadius:999, display:'flex', alignItems:'center', gap:6, fontSize:11, fontWeight:600, boxShadow:'0 4px 16px rgba(0,0,0,.5)' }}>
-            <span style={{ width:7, height:7, borderRadius:'50%', background:'#22c55e', display:'inline-block', animation:'livePulse 2s ease-in-out infinite' }} />
+      {/* Badge comptage camions */}
+      {positions.length > 0 && (
+        <div style={{ position:'absolute', top:12, left:12, zIndex:1000, pointerEvents:'none' }}>
+          <div style={{ background:'rgba(255,255,255,0.95)', border:'1px solid rgba(0,0,0,0.12)', backdropFilter:'blur(8px)', color:'#111', padding:'5px 11px', borderRadius:999, display:'flex', alignItems:'center', gap:6, fontSize:11, fontWeight:600, boxShadow:'0 2px 12px rgba(0,0,0,0.15)' }}>
+            <span style={{ width:7, height:7, borderRadius:'50%', background:'#16a34a', display:'inline-block', animation:'livePulse 2s ease-in-out infinite', flexShrink:0 }} />
             {positions.filter(p => p.is_active !== false).length} actif{positions.filter(p => p.is_active !== false).length !== 1 ? 's' : ''}
-            {positions.some(p => !p.is_active) && (
-              <span style={{ color:'#666', marginLeft:4 }}>· {positions.filter(p => !p.is_active).length} rangé{positions.filter(p => !p.is_active).length !== 1 ? 's' : ''}</span>
+            {positions.some(p => p.is_active === false) && (
+              <span style={{ color:'#9ca3af', marginLeft:2 }}>· {positions.filter(p => p.is_active === false).length} rangé{positions.filter(p => p.is_active === false).length !== 1 ? 's' : ''}</span>
             )}
           </div>
         </div>
@@ -196,9 +190,9 @@ const LiveMap = forwardRef<LiveMapHandle, Props>(({
         <button
           onClick={onRefresh}
           title="Actualiser"
-          style={{ position:'absolute', top:14, right:14, zIndex:1000, width:36, height:36, background:'rgba(24,24,27,.9)', border:'1px solid #27272a', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', backdropFilter:'blur(8px)' }}
+          style={{ position:'absolute', top:12, right:12, zIndex:1000, width:36, height:36, background:'rgba(255,255,255,0.95)', border:'1px solid rgba(0,0,0,0.12)', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', backdropFilter:'blur(8px)', boxShadow:'0 2px 12px rgba(0,0,0,0.15)' }}
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#333" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
           </svg>
