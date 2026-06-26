@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import type { TruckPosition } from '@/types'
 import type { LiveMapHandle } from '@/components/LiveMap'
 import { Truck, Users, Activity, MapPin, ArrowUpRight, CheckCircle } from 'lucide-react'
+import GPSAlertMonitor from '@/components/GPSAlertMonitor'
 
 const LiveMap = dynamic(() => import('@/components/LiveMap'), { ssr: false })
 
@@ -119,6 +120,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[300px_1fr] lg:gap-4 lg:items-start">
+      <GPSAlertMonitor positions={positions} />
 
       {/* ── CARTE (mobile: en premier, pleine largeur) ── */}
       <div className="lg:hidden rounded-2xl relative overflow-hidden border border-border-thin" style={{ height: 260 }}>

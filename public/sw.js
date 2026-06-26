@@ -2,7 +2,7 @@
 // FrigoTransport Service Worker — GPS Background + Cache
 // ============================================================
 
-const CACHE = 'frigotransport-v3'
+const CACHE = 'frigotransport-v4'
 const GPS_QUEUE_KEY = 'gps-queue'
 
 // ── Installation ─────────────────────────────────────────────
@@ -42,10 +42,11 @@ self.addEventListener('message', async e => {
     return
   }
 
-  // GPS point reçu → notif + sauvegarde en queue
+  // GPS point reçu → notif + sauvegarde en queue + timestamp
   if (type === 'GPS_POINT') {
     await enqueueGPS(payload)
     await triggerSync()
+    await saveMetaValue('last_gps_ts', Date.now())
     updateNotification(payload)
     return
   }
@@ -75,9 +76,37 @@ self.addEventListener('sync', async e => {
 // ── Periodic Background Sync (Android Chrome) ────────────────
 self.addEventListener('periodicsync', e => {
   if (e.tag === 'gps-periodic') {
-    e.waitUntil(flushGPSQueue())
+    e.waitUntil(Promise.all([flushGPSQueue(), checkGPSAlive()]))
   }
 })
+
+async function checkGPSAlive() {
+  const lastTs = await getMetaValue('last_gps_ts')
+  if (!lastTs) return                            // GPS jamais démarré
+  const age = Date.now() - lastTs
+  const SILENT = 30 * 60 * 1000                 // 30 minutes
+  if (age < SILENT) return                       // Tout va bien
+  // Vérifier s'il y a une affectation active en cours
+  const assignId = await getMetaValue('active_assign_id')
+  if (!assignId) return                          // Plus en service
+
+  const mins = Math.round(age / 60_000)
+  const notifs = await self.registration.getNotifications({ tag: 'gps-inactive' })
+  // Ne pas respammer si la notif est déjà là
+  if (notifs.length > 0) return
+
+  await self.registration.showNotification('📍 FrigoTransport — GPS inactif', {
+    body:             `Votre position n'a pas été envoyée depuis ${mins} min. Ouvrez l'app pour reprendre le suivi.`,
+    tag:              'gps-inactive',
+    renotify:         false,
+    silent:           false,
+    requireInteraction: true,
+    icon:             '/FrigoTransport/icon-192.png',
+    badge:            '/FrigoTransport/icon-192.png',
+    actions:          [{ action: 'open', title: 'Ouvrir l\'app' }],
+    data:             { url: '/FrigoTransport/worker/' },
+  })
+}
 
 // ── Notification click → ouvre l'app ─────────────────────────
 self.addEventListener('notificationclick', e => {
@@ -190,7 +219,7 @@ async function triggerSync() {
 // IndexedDB helpers
 function openDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open('frigo-gps', 2)
+    const req = indexedDB.open('frigo-gps', 3)  // v3: ajout store meta
     req.onupgradeneeded = e => {
       const db = e.target.result
       if (!db.objectStoreNames.contains('queue')) {
@@ -200,10 +229,34 @@ function openDB() {
       if (!db.objectStoreNames.contains('config')) {
         db.createObjectStore('config', { keyPath: 'id' })
       }
+      if (!db.objectStoreNames.contains('meta')) {
+        db.createObjectStore('meta', { keyPath: 'key' })
+      }
     }
     req.onsuccess = e => resolve(e.target.result)
     req.onerror   = reject
   })
+}
+
+async function saveMetaValue(key, value) {
+  try {
+    const db = await openDB()
+    const tx = db.transaction('meta', 'readwrite')
+    tx.objectStore('meta').put({ key, value })
+    await new Promise((ok, err) => { tx.oncomplete = ok; tx.onerror = err })
+  } catch {}
+}
+
+async function getMetaValue(key) {
+  try {
+    const db = await openDB()
+    const tx = db.transaction('meta', 'readonly')
+    return await new Promise((resolve, reject) => {
+      const req = tx.objectStore('meta').get(key)
+      req.onsuccess = () => resolve(req.result?.value ?? null)
+      req.onerror   = reject
+    })
+  } catch { return null }
 }
 
 function getAllItems(store) {

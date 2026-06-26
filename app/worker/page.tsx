@@ -138,6 +138,11 @@ export default function WorkerPage() {
           is_active: true,
         })
         const now = Date.now()
+        // Informer le SW du dernier signal GPS (pour détection inactivité 30 min)
+        navigator.serviceWorker?.controller?.postMessage({
+          type: 'GPS_POINT',
+          payload: { assignment_id: assign.id, truck_id: assign.truck_id, worker_id: userId, latitude, longitude, accuracy: accuracy ?? null, speed: speed ?? null, heading: heading ?? null },
+        })
         if (now - lastSentRef.current < 5_000) return
         lastSentRef.current = now
         await supabase.from('locations').insert({

@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react'
 import { RefreshCw, X, Sparkles } from 'lucide-react'
 
 // ⬆️ INCRÉMENTER ICI à chaque déploiement + mettre à jour CHANGELOG
-const APP_VERSION = '1.8.0'
+const APP_VERSION = '1.9.0'
 const CHANGELOG = [
+  'Alerte GPS — notification si aucun signal depuis 30 min',
+  'Notification ouvrier — rappel d\'ouvrir l\'app si GPS inactif',
   'Google Maps intégré — rues, restaurants, POIs en temps réel',
   'Marqueur camion corrigé — s\'affiche au bon endroit sur la carte',
-  'Adresse dans la popup — affichée automatiquement au clic',
-  'Écran anti-veille — l\'app reste allumée comme YouTube',
-  'Historique des trajets avec polyline colorée par vitesse',
-  'Flèche camion tourne dans la direction de déplacement',
+  'Adresse dans la popup au clic sur un camion',
+  'Écran anti-veille sur toute l\'application',
 ]
 
 export default function PWAUpdater() {
