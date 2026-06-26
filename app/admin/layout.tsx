@@ -30,6 +30,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const desktopRef = useRef<HTMLDivElement>(null)
   const mobileRef  = useRef<HTMLDivElement>(null)
 
+  // Wake Lock — empêche la veille pendant que l'admin surveille les camions
+  useEffect(() => {
+    let wakeLock: any = null
+    const acquire = async () => {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await (navigator as any).wakeLock.request('screen')
+        }
+      } catch {}
+    }
+    acquire()
+    const onVisible = () => { if (document.visibilityState === 'visible') acquire() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      wakeLock?.release().catch(() => {})
+    }
+  }, [])
+
   useEffect(() => {
     const id = 'leaflet-css'
     if (!document.getElementById(id)) {

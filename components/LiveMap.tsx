@@ -162,13 +162,31 @@ const LiveMap = forwardRef<LiveMapHandle, Props>(({
         markersRef.current.set(pos.truck_id, marker)
         statusRef.current.set(pos.truck_id, isActive)
 
-        // Animation d'apparition (scale + fade style Uber)
+        // Animation d'apparition sur le WRAPPER INTERNE — ne touche pas
+        // au transform:translate3d() de Leaflet sur l'élément outer
         requestAnimationFrame(() => {
-          const el = marker.getElement()
-          if (el) {
-            el.style.transition = 'none'
-            el.style.animation = 'markerAppear 0.45s cubic-bezier(0.175,0.885,0.32,1.275) both'
-          }
+          const wrapper = marker.getElement()?.querySelector('.mk-wrap') as HTMLElement | null
+          if (wrapper) wrapper.style.animation = 'markerAppear 0.45s cubic-bezier(0.175,0.885,0.32,1.275)'
+        })
+
+        // Géocodage inverse : afficher l'adresse dans la popup à l'ouverture
+        marker.on('popupopen', async () => {
+          const popup = marker.getPopup()
+          if (!popup) return
+          const addrEl = popup.getElement()?.querySelector('.popup-addr') as HTMLElement | null
+          if (!addrEl || addrEl.dataset.loaded) return
+          addrEl.dataset.loaded = '1'
+          try {
+            const r = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${pos.latitude}&lon=${pos.longitude}&format=json`,
+              { headers: { 'Accept-Language': 'fr' } }
+            )
+            const d = await r.json()
+            if (d.display_name) {
+              const parts = d.display_name.split(', ')
+              addrEl.textContent = parts.slice(0, 3).join(', ')
+            }
+          } catch { addrEl.textContent = '—' }
         })
       }
 
@@ -178,9 +196,9 @@ const LiveMap = forwardRef<LiveMapHandle, Props>(({
     // ── Supprimer les camions sans données (avec animation) ─────────────
     markersRef.current.forEach((marker, id) => {
       if (seen.has(id)) return
-      const el = marker.getElement()
-      if (el) {
-        el.style.animation = 'markerDisappear 0.25s ease forwards'
+      const wrapper = marker.getElement()?.querySelector('.mk-wrap') as HTMLElement | null
+      if (wrapper) {
+        wrapper.style.animation = 'markerDisappear 0.25s ease forwards'
         setTimeout(() => { marker.remove(); markersRef.current.delete(id) }, 260)
       } else {
         marker.remove()
@@ -334,14 +352,16 @@ function animateMarker(
 // ── Construction de l'icône Leaflet ──────────────────────────────────────────
 function buildIcon(L: any, isActive: boolean, heading: number) {
   const size = isActive ? 48 : 38
+  // mk-wrap = wrapper interne sur lequel on applique les animations
+  // L'élément outer reste intact pour que Leaflet puisse positionner via translate3d
   const html = isActive
-    ? `<div style="position:relative;width:48px;height:48px">
+    ? `<div class="mk-wrap" style="position:relative;width:48px;height:48px">
         <div style="position:absolute;inset:0;background:rgba(22,163,74,0.2);border-radius:50%;animation:ping 2.2s ease-out infinite"></div>
         <div class="truck-inner" style="position:absolute;inset:7px;background:#16a34a;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 18px rgba(22,163,74,0.55),0 1px 4px rgba(0,0,0,0.15);border:2.5px solid white;transform:rotate(${heading}deg)">
           ${navArrowSvg()}
         </div>
        </div>`
-    : `<div style="position:relative;width:38px;height:38px">
+    : `<div class="mk-wrap" style="position:relative;width:38px;height:38px">
         <div style="position:absolute;inset:5px;background:#64748b;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,0.25)">
           ${truckSvg()}
         </div>
@@ -397,9 +417,13 @@ function popupContent(pos: TruckPosition): string {
         ${isActive ? '● Live' : '○ Rangé'}
       </span>
     </div>
-    <div style="background:#f8fafc;border-radius:10px;padding:8px 11px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+    <div style="background:#f8fafc;border-radius:10px;padding:8px 11px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
       <span style="color:#64748b;font-size:11px">Conducteur</span>
       <span style="color:#0f172a;font-size:11px;font-weight:600">${pos.worker_name || '—'}</span>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:6px;background:#f8fafc;border-radius:10px;padding:7px 11px;margin-bottom:8px">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span class="popup-addr" style="color:#64748b;font-size:10px;line-height:1.4">Chargement adresse...</span>
     </div>
     <div style="display:flex;gap:6px">
       <div style="flex:1;background:#f8fafc;border-radius:10px;padding:7px 8px;text-align:center">
