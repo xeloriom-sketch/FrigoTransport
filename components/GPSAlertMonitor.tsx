@@ -34,13 +34,10 @@ export default function GPSAlertMonitor({ positions }: Props) {
           const mins = Math.round(age / 60_000)
 
           new Notification(`⚠️ ${pos.truck_name} — Aucun signal GPS`, {
-            body:     `${pos.worker_name} n'a pas transmis depuis ${mins} min. Vérifiez que l'écran reste allumé.`,
-            icon:     '/FrigoTransport/icon-192.png',
-            badge:    '/FrigoTransport/icon-192.png',
-            tag:      `gps-silent-${pos.truck_id}`,
-            renotify: true,
-            silent:   false,
-          })
+            body:  `${pos.worker_name} n'a pas transmis depuis ${mins} min. Vérifiez que l'écran reste allumé.`,
+            icon:  '/FrigoTransport/icon-192.png',
+            tag:   `gps-silent-${pos.truck_id}`,
+          } as NotificationOptions)
         }
 
         // Réinitialiser quand le camion retrouve un signal
